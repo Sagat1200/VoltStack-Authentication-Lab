@@ -1,0 +1,50 @@
+{
+    "name": "voltstack/authentication-lab",
+    "description": "The Authentication Lab Package for VoltStack Framework",
+    "license": "MIT",
+    "keywords": [
+        "voltstack",
+        "authentication",
+        "php"
+    ],
+    "authors": [
+        {
+            "name": "Francisco J. Morales",
+            "email": "francisco.morales@voltstack.net"
+        }
+    ],
+    "homepage": "https://voltstack.net",
+    "require": {
+        "php": "^8.3",
+        "voltstack/framework": "@dev"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.1"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../voltstack-framework",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "VoltStack\\AuthenticationLab\\": "src",
+            "VoltStack\\AuthenticationLab\\Pages\\": "app/Pages/",
+            "VoltStack\\AuthenticationLab\\Controllers\\": "app/Controllers/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "VoltStack\\AuthenticationLab\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0-dev"
+        }
+    }
+}
