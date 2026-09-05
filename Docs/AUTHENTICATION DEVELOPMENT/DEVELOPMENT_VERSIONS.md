@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-05`
-- Estado general: `Existe lenguaje base del subsistema y orchestracion minima; el flujo real de password y session aun esta pendiente`
-- Foco del siguiente ciclo recomendado: `identity providers + password authentication + session authentication`
+- Estado general: `Existe lenguaje base del subsistema y un primer flujo real de password authentication sobre provider local; la session auth aun esta pendiente`
+- Foco del siguiente ciclo recomendado: `session authentication + login persistence + authenticator resolution`
 
 ## Versionado de desarrollo
 
@@ -105,6 +105,37 @@ Sirve como control operativo de:
   - no existe `AuthenticationSession`,
   - y el orchestrator actual solo resuelve recovery minimo desde el contexto presente.
 
+### DV-AUTH-004
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `01`, `03`, `04`, `06`, `08`, `09`, `11`, `22`, `26`, `47`, `49`, `50`
+- Alcance objetivo:
+  - introducir el primer provider real de identidad para autenticacion local,
+  - agregar autenticacion real por `identifier/password`,
+  - exponer `attempt()` como primer entry point de login por credenciales,
+  - y validar el flujo con pruebas unitarias y feature.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/IdentityProviderInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticatorInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Credentials/PasswordCredentials.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Identity/LocalIdentityProvider.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/PasswordAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Runtime/AuthenticationOrchestrator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Platform/Application.php`
+  - `vendor/voltstack/framework/tests/Unit/LocalIdentityProviderTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `Quantum/Auth` ya puede autenticar credenciales reales por password contra un provider local configurado,
+  - el contenedor resuelve `IdentityProviderInterface` y `AuthenticatorInterface` con implementaciones por defecto,
+  - `AuthManager::attempt()` crea un `AuthenticationContext` autentico cuando las credenciales son validas,
+  - y existe cobertura automatizada para login valido, login invalido y resolucion de identidad local.
+- Gap natural posterior:
+  - aun no existe `AuthenticationSession`,
+  - el login no persiste entre requests,
+  - no hay resolver de multiples authenticators,
+  - y falta `login()` explicito ademas de facade/configuracion dedicada.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -116,10 +147,12 @@ Sirve como control operativo de:
    - `check()`
    - `guest()`
    - `id()`
+   - `attempt()`
    - `logout()`
 3. Integracion minima del servicio en bootstrap del framework.
 4. `AuthenticationContext` y `AuthenticationDecision` como lenguaje base del subsistema.
 5. `AuthenticationManagerInterface` y `AuthenticationOrchestratorInterface` resueltos por el contenedor.
+6. Autenticacion minima por password contra un provider local configurado.
 
 ### Ya preparado de forma adyacente
 
@@ -131,10 +164,10 @@ Sirve como control operativo de:
 ### Todavia parcial o incompleto
 
 1. Dominio de identidad y evidencias.
-2. Manager y orchestrator reales de autenticacion con credenciales.
-3. Password authentication.
+2. Manager y orchestrator completos para multiples mecanismos de autenticacion.
+3. Password authentication con policy y lifecycle formal.
 4. Session authentication.
-5. Login/logout flow real.
+5. Login/logout flow persistido.
 6. Facade y DX completas.
 7. Testing system formal del subsistema.
 
@@ -155,14 +188,11 @@ Sirve como control operativo de:
 
 ### Opcion recomendada inmediata
 
-Cerrar el primer flujo autentico real sobre la base ya creada:
+Cerrar la persistencia y restauracion del primer flujo ya autenticable:
 
-- `06_AUTHENTICATOR_SYSTEM.md`
 - `07_AUTHENTICATOR_RESOLUTION_SELECTION_AND_PRIORITY_SYSTEM.md`
 - `08_AUTHENTICATION_PASSPORT_CREDENTIAL_AND_EVIDENCE_SYSTEM.md`
-- `09_IDENTITY_MODEL_PROVIDER_RESOLUTION_AND_FEDERATED_MAPPING_SYSTEM.md`
 - `10_IDENTITY_SECURITY_STATE_ACCOUNT_STATUS_AND_AUTHENTICATION_ELIGIBILITY_SYSTEM.md`
-- `11_PASSWORD_AUTHENTICATION_HASHING_POLICY_AND_CREDENTIAL_LIFECYCLE_SYSTEM.md`
 - `12_SESSION_AUTHENTICATION_PERSISTENCE_CONTEXT_RESTORATION_AND_SESSION_LIFECYCLE_SYSTEM.md`
 - `22_AUTHENTICATION_LOGIN_LOGOUT_SIGN_IN_SIGN_OUT_ENTRY_POINT_AND_USER_AUTHENTICATION_FLOW_SYSTEM.md`
 - `47_AUTHENTICATION_DEVELOPER_EXPERIENCE_FACADE_HELPER_CONFIGURATION_BOOTSTRAP_AND_APPLICATION_INTEGRATION_SYSTEM.md`
@@ -170,22 +200,23 @@ Cerrar el primer flujo autentico real sobre la base ya creada:
 
 ### Motivo
 
-- hoy existe una base tecnica muy pequena y aislada,
-- el valor inmediato del sistema esta en pasar de `auth.user` manual a autenticacion real,
-- y abrir MFA, federation o passkeys antes de cerrar password + session + context produciria sobrearquitectura sin cierre operativo.
+- ya existe autenticacion real minima por password,
+- el valor inmediato ahora esta en persistir y restaurar ese login entre requests,
+- y abrir MFA, federation o passkeys antes de cerrar session + context produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
-1. `IdentityProviderInterface` y primera implementacion local.
-2. `PasswordAuthenticator` minimo.
-3. `AuthenticationSession` y restauracion segura.
-4. `attempt()` y `login()` reales.
+1. `AuthenticationSession` y restauracion segura.
+2. `AuthenticationSessionRepositoryInterface`.
+3. `SessionAuthenticator`.
+4. `login()` explicito y persistencia del flujo autenticado.
 5. API publica minima:
    - `Auth::check()`
    - `Auth::guest()`
    - `Auth::user()`
    - `Auth::id()`
    - `Auth::attempt()`
+   - `Auth::login()`
    - `Auth::logout()`
 6. pruebas unitarias y feature del flujo:
    - login correcto,

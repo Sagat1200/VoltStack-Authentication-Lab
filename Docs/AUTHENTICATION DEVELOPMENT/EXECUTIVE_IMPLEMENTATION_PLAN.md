@@ -51,7 +51,14 @@ Hoy ya existe una base minima ampliada:
 - `AuthenticationDecision`
 - `AuthenticationContextAccessor`
 - `AuthenticationOrchestrator`
+- `IdentityProviderInterface`
+- `LocalIdentityProvider`
+- `AuthenticatorInterface`
+- `PasswordAuthenticator`
+- `PasswordCredentials`
+- `AuthManager::attempt()`
 - pruebas unitarias y feature del lenguaje base y del request scope
+- pruebas del flujo minimo de password authentication
 
 Por tanto, el plan debe preservar compatibilidad con:
 
@@ -266,6 +273,23 @@ Entregar el primer mecanismo real de autenticacion.
 3. identidad inexistente rechaza sin leakage innecesario,
 4. no se exponen secretos en errores.
 
+### Estado actual del corte
+
+Parcialmente implementada:
+
+- existe `IdentityProviderInterface`,
+- existe `LocalIdentityProvider`,
+- existe `AuthenticatorInterface`,
+- existe `PasswordAuthenticator`,
+- existe `PasswordCredentials`,
+- y `AuthManager::attempt()` ya autentica contra el provider local configurado.
+
+Falta en esta fase:
+
+- policy formal de password,
+- ciclo de vida de credenciales,
+- y endurecimiento adicional del flujo.
+
 ## Fase 4 - Session authentication
 
 ### Objetivo
@@ -465,27 +489,24 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-004
+### DV-AUTH-005
 
 Alcance sugerido:
 
-- Fase 3
 - Fase 4
 - inicio de Fase 5
 
 Entregables minimos:
 
-1. `IdentityProviderInterface` y una implementacion local minima.
-2. `PasswordCredentials`.
-3. `AuthenticatorInterface`.
-4. `PasswordAuthenticator`.
-5. `AuthenticationSession`.
-6. `AuthenticationSessionRepositoryInterface`.
-7. `SessionAuthenticator`.
-8. `attempt()` y `login()` reales en `AuthManager`.
+1. `AuthenticationSession`.
+2. `AuthenticationSessionRepositoryInterface`.
+3. `SessionAuthenticator`.
+4. `login()` explicito en `AuthManager`.
+5. persistencia y restauracion segura entre requests.
+6. configuracion inicial para auth/session.
 
 Resultado esperado:
 
-- el framework deja de depender de `setUser()` manual para autenticarse,
-- aparece el primer flujo autentico real por credenciales,
+- el framework deja de depender de `setUser()` manual para mantener autenticacion entre requests,
+- el primer flujo autentico real por credenciales queda persistido por session,
 - y queda preparada la integracion posterior de facade, middleware y configuracion.
