@@ -10,6 +10,7 @@ El criterio del corte es conservador y se basa en evidencia visible en:
 - `vendor/voltstack/framework/src/Platform/Application.php`
 - `vendor/voltstack/framework/src/Helper/helpers.php`
 - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
 - piezas de integracion adyacente en `vendor/voltstack/framework/src/Quantum/Controllers/Security`
 
 ## Leyenda
@@ -27,19 +28,19 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | Estado           | Cantidad |
 | ---------------- | -------: |
 | Operativo        |        0 |
-| Parcial          |        8 |
-| Pendiente        |       42 |
+| Parcial          |       10 |
+| Pendiente        |       40 |
 | Total documentos |       50 |
 
 ## Matriz 01-50
 
 | Doc | Area | Estado | Evidencia visible | Gap principal |
 | --: | ---- | ------ | ----------------- | ------------- |
-| 01 | Authentication Architecture | Parcial | `Quantum/Auth/AuthManager.php`, binding scoped en `Application.php`, helper `auth()` | Falta la arquitectura por capas, contratos formales y coordinacion real del sistema |
-| 02 | Domain Model And Core Concepts | Pendiente | Sin evidencia suficiente en `Quantum/Auth` | Faltan `Identity`, `AuthenticationDecision`, `AuthenticationContext`, `Evidence` y value objects del dominio |
-| 03 | Lifecycle And Request Pipeline | Parcial | `AuthManager` usa `RuntimeContext::current()` y prueba de aislamiento por request en `AuthManagerTest.php` | Falta pipeline completo de recovery, firewall, authenticator, decision, context y persistence |
-| 04 | Manager And Orchestration System | Parcial | Existe `AuthManager` minimo con `user/check/guest/id/logout` | Falta `AuthenticationManagerInterface`, `AuthenticationOrchestrator`, stages y `AuthenticationOperationContext` |
-| 05 | Firewall Guard And Context Resolution | Pendiente | Solo hay metadata y atributos de seguridad fuera de `Quantum/Auth` | Falta resolver real de firewall, guard, contexto autenticado y recuperacion formal |
+| 01 | Authentication Architecture | Parcial | `Quantum/Auth/AuthManager.php`, `Contracts/*`, `Context/*`, `Runtime/*`, binding scoped en `Application.php`, helper `auth()` | Falta la arquitectura por capas completa, authenticators reales y persistencia |
+| 02 | Domain Model And Core Concepts | Parcial | `IdentityInterface`, `IdentityIdentifier`, `IdentityReference`, `GenericIdentity`, `AuthenticationContext`, `AuthenticationDecision`, `AuthDomainModelTest.php` | Falta evidence model, claims, factors y separacion completa de aggregates del dominio |
+| 03 | Lifecycle And Request Pipeline | Parcial | `AuthenticationRequest`, `AuthenticationContextAccessor`, `AuthenticationOrchestrator`, recovery minimo desde contexto actual, pruebas `AuthManagerTest.php` | Falta pipeline completo de recovery, firewall, authenticator, decision, context y persistence |
+| 04 | Manager And Orchestration System | Parcial | `AuthenticationManagerInterface`, `AuthenticationOrchestratorInterface`, `AuthenticationOperationContext`, `AuthenticationOrchestrator`, `AuthManager` como capa de compatibilidad | Falta stage pipeline formal y operaciones reales de authenticate/login/logout con credenciales |
+| 05 | Firewall Guard And Context Resolution | Parcial | `AuthenticationContextAccessor` resuelve y limpia contexto autenticado request-scoped | Falta resolver real de firewall y guard, ademas de recovery formal desde session/token |
 | 06 | Authenticator System | Pendiente | Sin evidencia suficiente en `Quantum/Auth` | Faltan contratos y authenticators concretos |
 | 07 | Authenticator Resolution Selection And Priority | Pendiente | Sin evidencia suficiente | Falta resolver autenticadores aplicables, prioridad y manejo de ambiguedad |
 | 08 | Passport Credential And Evidence System | Pendiente | Sin evidencia suficiente | Falta `AuthenticationPassport`, credenciales tipadas, evidencia verificada y ensamblado de evidence |
@@ -56,11 +57,11 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | 19 | Throttling Rate Limiting Brute Force Credential Stuffing And Abuse Protection | Pendiente | Sin evidencia suficiente | Falta abuse protection manager, counters y decisiones pre/post authentication |
 | 20 | Risk Engine Adaptive Authentication And Security Signal | Pendiente | Sin evidencia suficiente | Faltan signal providers, risk engine y politicas adaptativas |
 | 21 | Device Trust Device Identity And Trusted Device Credential | Pendiente | Sin evidencia suficiente | Faltan device references, trusted device credentials y evaluacion de confianza |
-| 22 | Login Logout Sign In Sign Out Entry Point And User Authentication Flow | Parcial | `AuthManager` soporta `logout()` y `setUser()` manual para pruebas | Falta `attempt`, `login`, entry points reales, flows de signin/signout y persistencia asociada |
+| 22 | Login Logout Sign In Sign Out Entry Point And User Authentication Flow | Parcial | `AuthManager` soporta `logout()`, `setUser()` y `context()` sobre el nuevo `AuthenticationContext` para pruebas e integracion minima | Falta `attempt`, `login`, entry points reales, flows de signin/signout y persistencia asociada |
 | 23 | Events Hooks Listeners Subscribers And Extension Lifecycle | Pendiente | Sin evidencia suficiente | Faltan eventos propios de Authentication y puntos de extension del lifecycle |
 | 24 | Audit Observability Logging Metrics Tracing And Explainability | Pendiente | Sin evidencia suficiente dentro de `Quantum/Auth` | Faltan audit trail, logs estructurados, metricas y explicabilidad de decisiones |
 | 25 | Failure Error Exception Denial And Security Response Handling | Pendiente | Existen excepciones de seguridad adyacentes fuera del subsistema Auth | Falta mapa de errores y respuestas propias de Authentication como subsistema |
-| 26 | Testing Verification Security Assurance And Conformance | Parcial | `tests/Feature/AuthManagerTest.php` valida scope por request del manager minimo | Falta harness formal, contratos, pruebas de seguridad, concurrencia y conformance |
+| 26 | Testing Verification Security Assurance And Conformance | Parcial | `tests/Feature/AuthManagerTest.php`, `tests/Unit/AuthDomainModelTest.php` validan scope por request y el lenguaje base del subsistema | Falta harness formal, contratos de authenticators, pruebas de seguridad, concurrencia y conformance |
 | 27 | Compilation Configuration Validation Cache Optimization And Runtime Performance | Pendiente | Sin evidencia suficiente | Faltan configuracion, validacion, caches y compilation de metadata Auth |
 | 28 | Extensibility Plugin Provider Custom Authenticator And Integration | Pendiente | Sin evidencia suficiente | Faltan registries, extension points y providers customizables |
 | 29 | Multi Tenancy Security Realms Cross Tenant Isolation And Tenant Authentication Policy | Pendiente | Sin evidencia suficiente | Faltan tenant context, realm resolution y aislamiento cross-tenant |
@@ -81,10 +82,10 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | 44 | Authentication Background Processing Async Security Task Maintenance Cleanup And Scheduled Operation | Pendiente | Sin evidencia suficiente | Faltan jobs de mantenimiento, limpieza y tareas asincronas del subsistema |
 | 45 | Rate Capacity Resource Governance Abuse Prevention And Denial Of Service Resilience | Pendiente | Sin evidencia suficiente | Faltan budgets de recurso, control de capacidad y resistencia DoS especifica |
 | 46 | Migration Legacy Credential Import Backward Compatibility And Progressive Security Upgrade | Pendiente | Sin evidencia suficiente | Faltan migracion de credenciales legadas y upgrade progresivo |
-| 47 | Developer Experience Facade Helper Configuration Bootstrap And Application Integration | Parcial | helper `auth()`, binding scoped en `Application.php`, `AuthManager` con API minima | Falta facade `Auth`, configuracion, middleware, helpers avanzados y API publica coherente con la arquitectura |
+| 47 | Developer Experience Facade Helper Configuration Bootstrap And Application Integration | Parcial | helper `auth()`, binding scoped en `Application.php`, `AuthManager` ahora expone `context()` y resuelve `AuthenticationManagerInterface` | Falta facade `Auth`, configuracion, middleware, helpers avanzados y API publica coherente con la arquitectura |
 | 48 | Administration Operational Tooling Diagnostics Security Operations And Production Management | Pendiente | Sin evidencia suficiente | Faltan comandos, diagnosticos y tooling operacional del sistema Auth |
-| 49 | Reference Implementation Default Components Secure Defaults And Framework Integration | Parcial | Existe una base minima integrada en bootstrap con `AuthManager` y helper global | Falta la implementacion de referencia segura por defecto: password, session, logout real, policy, failure handling y testing utilities |
-| 50 | System Integration And Final Architecture | Parcial | Hay una huella minima de integracion en bootstrap, helper y pruebas | Falta el cierre end-to-end del sistema `Quantum/Auth` como plataforma coherente de autenticacion |
+| 49 | Reference Implementation Default Components Secure Defaults And Framework Integration | Parcial | Existe base integrada en bootstrap con `AuthManager`, `AuthenticationContextAccessor` y `AuthenticationOrchestrator` por defecto | Faltan password, session, logout real persistido, policy, failure handling y testing utilities |
+| 50 | System Integration And Final Architecture | Parcial | Hay integracion minima entre contracts, contexto, bootstrap y pruebas del subsistema Auth | Falta el cierre end-to-end del sistema `Quantum/Auth` como plataforma coherente de autenticacion |
 
 ## Bloque actualmente visible en codigo
 
@@ -101,7 +102,31 @@ Capacidad actual:
 - consultar `user/check/guest/id`,
 - limpiar el estado con `logout()`.
 
-### 2. Infraestructura adyacente ya presente en el framework
+### 2. Lenguaje base del subsistema
+
+- `Contracts/AuthenticationManagerInterface.php`
+- `Contracts/AuthenticationOrchestratorInterface.php`
+- `Identity/IdentityInterface.php`
+- `Identity/IdentityIdentifier.php`
+- `Identity/IdentityReference.php`
+- `Identity/GenericIdentity.php`
+- `Context/AuthenticationRequest.php`
+- `Context/AuthenticationContext.php`
+- `Context/AuthenticationContextAccessor.php`
+- `Decisions/AuthenticationDecision.php`
+- `Decisions/AuthenticationDecisionStatus.php`
+- `Runtime/AuthenticationOperationContext.php`
+- `Runtime/AuthenticationOrchestrator.php`
+- `tests/Unit/AuthDomainModelTest.php`
+
+Capacidad actual:
+
+- representar identidad canonica minima,
+- representar `AuthenticationContext` y `AuthenticationDecision`,
+- resolver contexto autenticado request-scoped,
+- mantener compatibilidad con la API previa de `AuthManager`.
+
+### 3. Infraestructura adyacente ya presente en el framework
 
 - `AuthenticationRequired` en Controllers Security
 - `AuthenticationStrength`
@@ -121,7 +146,8 @@ Estas piezas son utiles para integracion futura, pero no sustituyen el subsistem
 Motivo:
 
 - hoy existe solo un contenedor request-scoped minimo,
-- pero aun no existe autenticacion real basada en credenciales, identidad, decision y session.
+- ya existe lenguaje base y recovery minimo desde contexto,
+- pero aun no existe autenticacion real basada en credenciales, identity providers, decision completa y session.
 
 ### Prioridad media
 
@@ -138,13 +164,12 @@ Motivo:
 
 ## Orden recomendado para seguir desarrollando
 
-1. cerrar `02 + 03 + 04 + 05`,
-2. abrir `06 + 07 + 08 + 09 + 10`,
-3. cerrar `11 + 12 + 22` para tener password + session + login/logout reales,
-4. consolidar `47 + 49`,
-5. despues abrir `25 + 26 + 36 + 37`,
-6. continuar con `13 + 14 + 15 + 19 + 20 + 21`,
-7. y finalmente expandir federation, passkeys, distributed runtime y operacion avanzada.
+1. consolidar `06 + 07 + 08 + 09 + 10`,
+2. cerrar `11 + 12 + 22` para tener password + session + login/logout reales,
+3. consolidar `47 + 49`,
+4. despues abrir `25 + 26 + 36 + 37`,
+5. continuar con `13 + 14 + 15 + 19 + 20 + 21`,
+6. y finalmente expandir federation, passkeys, distributed runtime y operacion avanzada.
 
 ## Regla de mantenimiento
 

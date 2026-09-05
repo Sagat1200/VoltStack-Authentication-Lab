@@ -300,6 +300,16 @@ Registrar:
 - resultado operativo,
 - siguiente gap natural.
 
+### Regla permanente de mantenimiento
+
+Siempre que se realice desarrollo y pruebas sobre `Quantum/Auth`, se deben actualizar en el mismo ciclo los documentos de:
+
+- `DEVELOPMENT_MATRIX.md`
+- `DEVELOPMENT_VERSIONS.md`
+- y cualquier otro artefacto de `AUTHENTICATION DEVELOPMENT` que haya quedado desalineado con el estado real del codigo.
+
+No dejar esa actualizacion para una fase posterior.
+
 ## Anti-patrones a evitar
 
 No continuar el desarrollo del sistema con estos patrones:

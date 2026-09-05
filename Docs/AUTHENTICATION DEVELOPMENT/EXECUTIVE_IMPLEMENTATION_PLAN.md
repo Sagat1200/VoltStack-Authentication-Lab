@@ -40,14 +40,20 @@ Esos bloques dependen de un core que todavia no existe.
 
 ## Estado actual de partida
 
-Hoy existe solamente:
+Hoy ya existe una base minima ampliada:
 
 - `Quantum\Auth\AuthManager`
 - helper `auth()`
 - binding scoped en `Application.php`
-- test feature basico de request scope
+- `AuthenticationManagerInterface`
+- `AuthenticationOrchestratorInterface`
+- `AuthenticationContext`
+- `AuthenticationDecision`
+- `AuthenticationContextAccessor`
+- `AuthenticationOrchestrator`
+- pruebas unitarias y feature del lenguaje base y del request scope
 
-Por tanto, el plan parte de una base minima y debe preservar compatibilidad con:
+Por tanto, el plan debe preservar compatibilidad con:
 
 - `auth()->user()`
 - `auth()->check()`
@@ -459,26 +465,27 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-003
+### DV-AUTH-004
 
 Alcance sugerido:
 
-- Fase 0
-- Fase 1
-- inicio de Fase 2
+- Fase 3
+- Fase 4
+- inicio de Fase 5
 
 Entregables minimos:
 
-1. `AuthenticationRequest`
-2. `AuthenticationDecision`
-3. `AuthenticationContext`
-4. `IdentityInterface`
-5. `AuthenticationManagerInterface`
-6. `AuthenticationOrchestratorInterface`
-7. `AuthenticationOperationContext`
-8. refactor de `AuthManager` a fachada de compatibilidad
+1. `IdentityProviderInterface` y una implementacion local minima.
+2. `PasswordCredentials`.
+3. `AuthenticatorInterface`.
+4. `PasswordAuthenticator`.
+5. `AuthenticationSession`.
+6. `AuthenticationSessionRepositoryInterface`.
+7. `SessionAuthenticator`.
+8. `attempt()` y `login()` reales en `AuthManager`.
 
 Resultado esperado:
 
-- el framework deja de tener solo un contenedor `auth.user`,
-- y pasa a tener el lenguaje base sobre el que se construira el resto del sistema.
+- el framework deja de depender de `setUser()` manual para autenticarse,
+- aparece el primer flujo autentico real por credenciales,
+- y queda preparada la integracion posterior de facade, middleware y configuracion.
