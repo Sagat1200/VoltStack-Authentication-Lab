@@ -57,8 +57,24 @@ Hoy ya existe una base minima ampliada:
 - `PasswordAuthenticator`
 - `PasswordCredentials`
 - `AuthManager::attempt()`
+- `AuthenticationSession`
+- `AuthenticationSessionRepositoryInterface`
+- `InMemoryAuthenticationSessionRepository`
+- `SessionAuthenticator`
+- `AuthManager::login()`
+- `AuthenticatorResolverInterface`
+- `DefaultAuthenticatorResolver`
+- facade `Auth`
+- `config/auth.php`
+- `IdentitySecurityState`
+- excepciones propias de Authentication
+- `attemptOrFail()`
+- `FileAuthenticationSessionRepository`
 - pruebas unitarias y feature del lenguaje base y del request scope
 - pruebas del flujo minimo de password authentication
+- pruebas del flujo minimo de session authentication
+- pruebas de facade, resolver y expiracion minima de session
+- pruebas de elegibilidad y driver file de session
 
 Por tanto, el plan debe preservar compatibilidad con:
 
@@ -319,6 +335,24 @@ Persistir y restaurar autenticacion de forma segura.
 3. logout invalida el estado restaurable,
 4. aislamiento entre requests consecutivos.
 
+### Estado actual del corte
+
+Parcialmente implementada:
+
+- existe `AuthenticationSession`,
+- existe `AuthenticationSessionId`,
+- existe `AuthenticationSessionRepositoryInterface`,
+- existe `InMemoryAuthenticationSessionRepository`,
+- existe `SessionAuthenticator`,
+- `AuthManager::login()` y `AuthManager::logout()` ya interactuan con la session,
+- y el kernel HTTP ya emite `Set-Cookie` / `X-Auth-Session`.
+
+Falta en esta fase:
+
+- rotacion de session,
+- storage persistente,
+- y reglas mas fuertes de revocacion.
+
 ## Fase 5 - DX e integracion de framework
 
 ### Objetivo
@@ -352,6 +386,22 @@ Convertir el core en experiencia de desarrollo usable.
 3. facade no filtra estado entre requests,
 4. bootstrap registra todos los servicios necesarios.
 
+### Estado actual del corte
+
+Parcialmente implementada:
+
+- existe facade `Auth`,
+- existe `config/auth.php`,
+- `AuthManager` ya expone `attempt()`, `login()`, `logout()` y `context()`,
+- existe `DefaultAuthenticatorResolver`,
+- y la session minima usa configuracion de cookie y expiracion.
+
+Falta en esta fase:
+
+- provider dedicado del subsistema,
+- middleware o alias de auth,
+- y una API publica aun mas pulida para adopcion de framework.
+
 ## Fase 6 - Endurecimiento minimo para declarar V1
 
 ### Objetivo
@@ -365,6 +415,22 @@ Cerrar el primer release realmente util.
 3. pruebas feature del flujo completo
 4. documentacion de configuracion inicial
 5. actualizacion de `DEVELOPMENT_MATRIX` y `DEVELOPMENT_VERSIONS`
+
+### Estado actual del corte
+
+Parcialmente implementada:
+
+- existen errores propios de Authentication,
+- existe elegibilidad minima de identidad,
+- `attemptOrFail()` ya permite flujos con excepcion,
+- y el storage de session puede ser `memory` o `file`.
+
+Falta en esta fase:
+
+- policy formal de password,
+- rotacion y revocacion avanzadas,
+- un modelo mas completo de errores por mecanismo,
+- y stores mas robustos para despliegues reales.
 
 ### Criterio de cierre de V1
 
@@ -489,24 +555,24 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-005
+### DV-AUTH-008
 
 Alcance sugerido:
 
-- Fase 4
-- inicio de Fase 5
+- endurecimiento del flujo base
+- consolidacion de password + session
 
 Entregables minimos:
 
-1. `AuthenticationSession`.
-2. `AuthenticationSessionRepositoryInterface`.
-3. `SessionAuthenticator`.
-4. `login()` explicito en `AuthManager`.
-5. persistencia y restauracion segura entre requests.
-6. configuracion inicial para auth/session.
+1. policy mas explicita de password.
+2. rotacion y revocacion de session.
+3. cleanup y endurecimiento del lifecycle.
+4. posible provider dedicado del subsistema.
+5. taxonomy mas rica de fallos.
+6. pruebas de revocacion y hardening.
 
 Resultado esperado:
 
-- el framework deja de depender de `setUser()` manual para mantener autenticacion entre requests,
-- el primer flujo autentico real por credenciales queda persistido por session,
-- y queda preparada la integracion posterior de facade, middleware y configuracion.
+- el flujo password + session gana controles mas fuertes de seguridad operacional,
+- Authentication deja una base mas creible para uso real,
+- y el subsistema queda mejor preparado para crecer hacia MFA, tokens y federation sin rehacer el nucleo.
