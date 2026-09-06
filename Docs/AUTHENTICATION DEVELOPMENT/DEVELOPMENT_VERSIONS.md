@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-05`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real, session auth minima, resolver formal, facade Auth, elegibilidad minima y storage configurable memory/file`
-- Foco del siguiente ciclo recomendado: `password policy + session hardening + failure model mas rico`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado y middleware alias auth`
+- Foco del siguiente ciclo recomendado: `session coordination mas robusta + denial taxonomy mas rica + entry points auth/guest mas completos`
 
 ## Versionado de desarrollo
 
@@ -234,6 +234,68 @@ Sirve como control operativo de:
   - el storage file no cubre escenarios distribuidos,
   - y el failure model todavia no tiene taxonomy completa por mecanismo.
 
+### DV-AUTH-008
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `11`, `12`, `22`, `25`, `26`, `49`
+- Alcance objetivo:
+  - introducir una policy explicita de password para el login,
+  - endurecer el lifecycle de session con purga, rotacion y revocacion,
+  - y consolidar pruebas del flujo base bajo esas nuevas reglas.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/PasswordPolicyInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Passwords/PasswordPolicy.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/PasswordAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationSessionRepositoryInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/InMemoryAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/FileAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/SessionAuthenticator.php`
+  - `config/auth.php`
+  - `vendor/voltstack/framework/tests/Unit/PasswordPolicyTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `Quantum/Auth` ya usa una policy explicita para validar password en autenticacion,
+  - las sessions expiradas se purgan activamente,
+  - el framework puede rotar sesiones al recuperarlas y revocar otras sesiones del mismo identity al login,
+  - y el flujo base queda cubierto por pruebas de policy, rotation y revocation.
+- Gap natural posterior:
+  - aun no existe persistencia de upgrade de hash cuando `needsRehash()` detecta deriva,
+  - la revocacion sigue siendo local al store configurado,
+  - faltan stores y coordinacion distribuidos,
+  - y el subsistema aun no tiene provider/middleware dedicados de integracion.
+
+### DV-AUTH-009
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `11`, `22`, `25`, `47`, `49`, `50`
+- Alcance objetivo:
+  - extraer el wiring del subsistema a un `AuthenticationServiceProvider`,
+  - introducir un middleware real aliasado como `auth`,
+  - y cerrar el primer upgrade persistente de hash para password authentication usando almacenamiento configurable del provider local.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthenticationServiceProvider.php`
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/AuthMiddleware.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/PasswordRehashingIdentityProviderInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/PasswordPolicyInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Passwords/PasswordPolicy.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Identity/LocalIdentityProvider.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/PasswordAuthenticator.php`
+  - `vendor/voltstack/framework/src/Platform/Application.php`
+  - `config/auth.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/LocalIdentityProviderTest.php`
+- Resultado:
+  - el framework ya registra Authentication mediante un provider dedicado y no por wiring embebido en `Application.php`,
+  - existe middleware `auth` resoluble por alias desde rutas del framework,
+  - `PasswordAuthenticator` ya puede rehashear credenciales exitosas y persistir el nuevo hash cuando el provider local usa `storage_path`,
+  - y queda cobertura automatizada para middleware protegido y rehash persistente.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado,
+  - falta un modelo mas rico de denials y entry points complementarios como `guest`,
+  - el provider local aun no cubre multiples fuentes persistentes o escenarios distribuidos,
+  - y la integracion con security/controller policy todavia no consume assurance/contexto enriquecido.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -256,6 +318,11 @@ Sirve como control operativo de:
 9. Resolver formal de authenticators para password y session.
 10. Elegibilidad minima de identidad y errores propios de Authentication.
 11. Driver de session configurable `memory` o `file`.
+12. Password policy explicita para login.
+13. Rotacion, revocacion y purga basica de sessions.
+14. `AuthenticationServiceProvider` dedicado para integrar el subsistema.
+15. Middleware alias `auth` para proteger rutas del framework.
+16. Upgrade persistente de password hash cuando el provider local usa `storage_path`.
 
 ### Ya preparado de forma adyacente
 
@@ -268,8 +335,8 @@ Sirve como control operativo de:
 
 1. Dominio de identidad y evidencias.
 2. Manager y orchestrator completos para multiples mecanismos de autenticacion.
-3. Password authentication con policy y lifecycle formal.
-4. Session authentication con rotacion, revocacion y stores mas robustos.
+3. Password authentication con lifecycle formal mas alla del rehash persistente inicial.
+4. Session authentication con revocacion distribuida y stores mas robustos.
 5. Identity eligibility y estado de seguridad mas ricos.
 6. Failure handling coherente y mas completo del subsistema.
 7. Testing system formal del subsistema.
@@ -291,7 +358,7 @@ Sirve como control operativo de:
 
 ### Opcion recomendada inmediata
 
-Consolidar el flujo ya operativo y endurecer su nucleo:
+Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 
 - `10_IDENTITY_SECURITY_STATE_ACCOUNT_STATUS_AND_AUTHENTICATION_ELIGIBILITY_SYSTEM.md`
 - `25_AUTHENTICATION_FAILURE_ERROR_EXCEPTION_DENIAL_AND_SECURITY_RESPONSE_HANDLING_SYSTEM.md`
@@ -302,16 +369,16 @@ Consolidar el flujo ya operativo y endurecer su nucleo:
 
 ### Motivo
 
-- ya existe autenticacion real minima por password y session con resolver, facade y errores propios,
-- el valor inmediato ahora esta en endurecer password, session y revocacion,
+- ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
+- el valor inmediato ahora esta en endurecer la coordinacion de session y completar la semantica operativa del subsistema,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
-1. policy de password mas explicita.
-2. rotacion de session.
-3. revocacion mas fuerte y cleanup.
-4. posible provider dedicado del subsistema.
+1. revocacion distribuida o store mas robusto para session.
+2. denial taxonomy mas rica y responses diferenciadas por entry point.
+3. entry points complementarios como `guest` o variantes de middleware.
+4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
 5. API publica minima:
    - `Auth::check()`
    - `Auth::guest()`
@@ -321,8 +388,8 @@ Consolidar el flujo ya operativo y endurecer su nucleo:
    - `Auth::login()`
    - `Auth::logout()`
 6. pruebas unitarias y feature del flujo:
-   - identidad inelegible,
-   - rotacion/revocacion de session,
+   - revocacion distribuida o store robusto,
+   - middleware complementario y denials diferenciados,
    - recovery correcto,
    - fallo autenticado con respuesta coherente,
    - aislamiento entre requests.

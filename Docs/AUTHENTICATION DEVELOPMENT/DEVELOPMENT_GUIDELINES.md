@@ -20,7 +20,7 @@ El orden de autoridad para decidir que desarrollar y como validarlo es:
 3. `AUTHENTICATION DEVELOPMENT/DEVELOPMENT_VERSIONS.md`
 4. evidencia real en:
    - `vendor/voltstack/framework/src/Quantum/Auth`
-   - `vendor/voltstack/framework/src/Platform/Application.php`
+   - `vendor/voltstack/framework/src/Quantum/Auth/AuthenticationServiceProvider.php`
    - `vendor/voltstack/framework/src/Helper/helpers.php`
    - `vendor/voltstack/framework/tests/Feature`
    - piezas de integracion adyacente en `vendor/voltstack/framework/src/Quantum/Controllers/Security`
@@ -222,8 +222,10 @@ Cualquier trabajo sobre `02-10` debe respetar:
 Cualquier trabajo sobre `11-12-22` debe respetar:
 
 - hashing fuerte y versionable,
+- policy explicita de password,
 - rotacion de session id,
 - revocacion y expiracion claras,
+- purga de sesiones expiradas cuando el lifecycle lo requiera,
 - aislamiento por request y por runtime persistente,
 - no almacenar secretos raw en session.
 
@@ -234,6 +236,7 @@ Cualquier trabajo sobre `47-49` debe respetar:
 - facade y helpers como proxies al core,
 - no escribir directamente en `$_SESSION`,
 - bootstrap claro en el `ServiceProvider`,
+- middleware y aliases alineados con `MiddlewareAliasRegistry`,
 - defaults seguros y configurables.
 
 ### Mecanismos avanzados
@@ -327,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Core + Lifecycle + Orchestration + Password + Session`
+`Session Coordination Mas Robusta + Denial Model Mas Rico + Entry Points Complementarios`
 
 Documentos objetivo:
 
@@ -348,10 +351,9 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. `IdentityInterface` y `IdentityReference`.
-2. `AuthenticationRequest`, `AuthenticationDecision` y `AuthenticationContext`.
-3. `AuthenticationManagerInterface` y `AuthenticationOrchestratorInterface`.
-4. `PasswordAuthenticator`.
-5. `AuthenticationSession` y restauracion segura.
-6. facade `Auth` o equivalente publico coherente.
-7. suite minima de pruebas del flujo principal.
+1. revocacion avanzada o distribuida de session.
+2. middleware complementario como `guest` o variantes equivalentes.
+3. denial model mas rico para distinguir `required`, `guest-only`, `stale-session` u otros entry points.
+4. alineacion de `AuthenticationContext` con Controllers Security.
+5. suite de pruebas de integracion del flujo endurecido.
+6. base para stores persistentes adicionales del provider local o providers mutables mas ricos.

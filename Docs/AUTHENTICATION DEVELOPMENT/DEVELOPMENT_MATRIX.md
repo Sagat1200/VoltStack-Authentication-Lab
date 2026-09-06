@@ -36,7 +36,7 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 
 | Doc | Area | Estado | Evidencia visible | Gap principal |
 | --: | ---- | ------ | ----------------- | ------------- |
-| 01 | Authentication Architecture | Parcial | `Quantum/Auth/AuthManager.php`, `Contracts/*`, `Context/*`, `Runtime/*`, `Authenticators/*`, `Identity/*`, `Sessions/*`, binding scoped/singleton en `Application.php`, helper `auth()`, facade `Auth`, `config/auth.php` | Falta governance del sistema, politica de fallos y storage persistente |
+| 01 | Authentication Architecture | Parcial | `Quantum/Auth/AuthManager.php`, `AuthenticationServiceProvider.php`, `Contracts/*`, `Context/*`, `Runtime/*`, `Authenticators/*`, `Identity/*`, `Sessions/*`, `Quantum/Middlewares/AuthMiddleware.php`, helper `auth()`, facade `Auth`, `config/auth.php` | Falta governance del sistema, politica de fallos mas rica y coordinacion distribuida |
 | 02 | Domain Model And Core Concepts | Parcial | `IdentityInterface`, `IdentityIdentifier`, `IdentityReference`, `GenericIdentity`, `AuthenticationContext`, `AuthenticationDecision`, `AuthDomainModelTest.php` | Falta evidence model, claims, factors y separacion completa de aggregates del dominio |
 | 03 | Lifecycle And Request Pipeline | Parcial | `AuthenticationRequest`, `AuthenticationContextAccessor`, `AuthenticationOrchestrator`, `DefaultAuthenticatorResolver`, `PasswordAuthenticator`, `SessionAuthenticator`, `AuthenticationResponseDecorator`, autenticacion y recovery entre requests en `AuthManagerTest.php` | Falta pipeline completo con firewall, continuation state y eventos del lifecycle |
 | 04 | Manager And Orchestration System | Parcial | `AuthenticationManagerInterface`, `AuthenticationOrchestratorInterface`, `AuthenticationOperationContext`, `AuthenticationOrchestrator`, `AuthManager` con `attempt()`, `login()` y `logout()` persistido | Falta stage pipeline formal, `login()` mas expresivo y operaciones avanzadas de governance |
@@ -46,8 +46,8 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | 08 | Passport Credential And Evidence System | Parcial | `Credentials/PasswordCredentials.php` tipa el ingreso de credenciales para password auth | Falta `AuthenticationPassport`, evidencia verificada, claims y ensamblado formal de evidence |
 | 09 | Identity Model Provider Resolution And Federated Mapping | Parcial | `Contracts/IdentityProviderInterface.php`, `Identity/LocalIdentityProvider.php`, `IdentityInterface`, `GenericIdentity` | Falta resolver multiples providers, mapping federado y referencias externas canonicas |
 | 10 | Identity Security State Account Status And Authentication Eligibility | Parcial | `Identity/IdentitySecurityState.php`, `IdentityProviderInterface::securityStateFor()`, `LocalIdentityProvider`, rechazo por identidad inelegible en `PasswordAuthenticator`, tests unitarios y feature | Falta versionado de seguridad, lockout policies y reglas mas ricas de elegibilidad |
-| 11 | Password Authentication Hashing Policy And Credential Lifecycle | Parcial | `Authenticators/PasswordAuthenticator.php`, `Credentials/PasswordCredentials.php`, `Identity/LocalIdentityProvider.php`, uso de `password_verify()` | Falta policy de hashing, upgrade, expiracion y ciclo de vida formal de credenciales |
-| 12 | Session Authentication Persistence Context Restoration And Session Lifecycle | Parcial | `Sessions/AuthenticationSession.php`, `AuthenticationSessionId.php`, `InMemoryAuthenticationSessionRepository.php`, `FileAuthenticationSessionRepository.php`, `Contracts/AuthenticationSessionRepositoryInterface.php`, `Authenticators/SessionAuthenticator.php`, expiracion configurable en `config/auth.php`, cookie/header de session y tests feature de restauracion/logout/expiry | Falta rotacion avanzada, revocacion fuerte y stores distribuidos |
+| 11 | Password Authentication Hashing Policy And Credential Lifecycle | Parcial | `Contracts/PasswordPolicyInterface.php`, `Contracts/PasswordRehashingIdentityProviderInterface.php`, `Passwords/PasswordPolicy.php`, `Authenticators/PasswordAuthenticator.php`, `Identity/LocalIdentityProvider.php`, `Credentials/PasswordCredentials.php`, `config/auth.php`, tests unitarios y feature de policy/rehash | Falta expiracion y ciclo de vida formal de credenciales mas alla del rehash inicial |
+| 12 | Session Authentication Persistence Context Restoration And Session Lifecycle | Parcial | `Sessions/AuthenticationSession.php`, `AuthenticationSessionId.php`, `InMemoryAuthenticationSessionRepository.php`, `FileAuthenticationSessionRepository.php`, `Contracts/AuthenticationSessionRepositoryInterface.php`, `Authenticators/SessionAuthenticator.php`, expiracion configurable, `rotate_on_recover`, `revoke_others_on_login`, purga de expiradas y tests feature de restauracion/logout/rotation/revocation | Faltan stores distribuidos, revocacion remota y coordinacion multi-nodo |
 | 13 | Remember Me Persistent Login And Long Lived Authentication Credential | Pendiente | Sin evidencia suficiente | Falta modelo de credencial persistente independiente de session |
 | 14 | Token Bearer API And Stateless Authentication | Pendiente | Solo existe infraestructura adyacente de `AuthenticationStrength` en Controllers Security | Falta autenticacion stateless real en `Quantum/Auth`, verificacion de tokens y resolucion de identidad |
 | 15 | Multi Factor Authentication Factor Orchestration And Step Up | Pendiente | Solo hay semantica adyacente de `AuthenticationStrength::MultiFactor` | Falta sistema MFA, factor orchestration, challenge y step-up |
@@ -57,11 +57,11 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | 19 | Throttling Rate Limiting Brute Force Credential Stuffing And Abuse Protection | Pendiente | Sin evidencia suficiente | Falta abuse protection manager, counters y decisiones pre/post authentication |
 | 20 | Risk Engine Adaptive Authentication And Security Signal | Pendiente | Sin evidencia suficiente | Faltan signal providers, risk engine y politicas adaptativas |
 | 21 | Device Trust Device Identity And Trusted Device Credential | Pendiente | Sin evidencia suficiente | Faltan device references, trusted device credentials y evaluacion de confianza |
-| 22 | Login Logout Sign In Sign Out Entry Point And User Authentication Flow | Parcial | `AuthManager` soporta `attempt()`, `login()`, `logout()`, `setUser()` y `context()`; facade `Auth`; `AuthManagerTest.php` cubre login valido, invalido, restauracion, expiracion y logout | Faltan entry points/middleware completos y politicas de sign-in/sign-out mas ricas |
+| 22 | Login Logout Sign In Sign Out Entry Point And User Authentication Flow | Parcial | `AuthManager` soporta `attempt()`, `attemptOrFail()`, `login()`, `logout()`, `setUser()` y `context()`; facade `Auth`; `Quantum/Middlewares/AuthMiddleware.php`; `AuthManagerTest.php` cubre login valido, invalido, policy, restauracion, expiracion, rotacion, revocacion, logout y ruta protegida | Faltan entry points complementarios como `guest` y politicas de sign-in/sign-out mas ricas |
 | 23 | Events Hooks Listeners Subscribers And Extension Lifecycle | Pendiente | Sin evidencia suficiente | Faltan eventos propios de Authentication y puntos de extension del lifecycle |
 | 24 | Audit Observability Logging Metrics Tracing And Explainability | Pendiente | Sin evidencia suficiente dentro de `Quantum/Auth` | Faltan audit trail, logs estructurados, metricas y explicabilidad de decisiones |
-| 25 | Failure Error Exception Denial And Security Response Handling | Parcial | `Exceptions/AuthenticationException.php`, `InvalidCredentialsException.php`, `IdentityNotEligibleException.php`, `attemptOrFail()`, integracion en `Quantum/Exceptions/ExceptionHandler.php` con `401`, `WWW-Authenticate` y `X-Volt-Error-Code` | Falta mapa mas completo de errores, denial policies y respuestas especificas por mecanismo |
-| 26 | Testing Verification Security Assurance And Conformance | Parcial | `tests/Feature/AuthManagerTest.php`, `tests/Unit/AuthDomainModelTest.php`, `tests/Unit/LocalIdentityProviderTest.php`, `tests/Unit/AuthenticationSessionRepositoryTest.php`, `tests/Unit/DefaultAuthenticatorResolverTest.php`, `tests/Unit/FileAuthenticationSessionRepositoryTest.php` validan scope por request, facade, provider local, elegibilidad, resolver, persistencia minima y driver file | Falta harness formal, concurrencia, endurecimiento y conformance |
+| 25 | Failure Error Exception Denial And Security Response Handling | Parcial | `Exceptions/AuthenticationException.php`, `InvalidCredentialsException.php`, `IdentityNotEligibleException.php`, `AuthenticationRequiredException.php`, `attemptOrFail()`, `Quantum/Middlewares/AuthMiddleware.php`, integracion en `Quantum/Exceptions/ExceptionHandler.php` con `401`, `WWW-Authenticate` y `X-Volt-Error-Code` | Falta mapa mas completo de errores, denial policies diferenciadas y respuestas especificas por mecanismo |
+| 26 | Testing Verification Security Assurance And Conformance | Parcial | `tests/Feature/AuthManagerTest.php`, `tests/Unit/AuthDomainModelTest.php`, `tests/Unit/LocalIdentityProviderTest.php`, `tests/Unit/AuthenticationSessionRepositoryTest.php`, `tests/Unit/DefaultAuthenticatorResolverTest.php`, `tests/Unit/FileAuthenticationSessionRepositoryTest.php`, `tests/Unit/PasswordPolicyTest.php` validan scope por request, facade, provider local, elegibilidad, policy, resolver, persistencia, rotation y revocation | Falta harness formal, concurrencia, endurecimiento y conformance |
 | 27 | Compilation Configuration Validation Cache Optimization And Runtime Performance | Parcial | existe `config/auth.php` con carga por `Bootstrapper::loadConfiguration()` y uso operativo en Auth/session | Faltan validacion, caches y optimizacion/metadata del subsistema |
 | 28 | Extensibility Plugin Provider Custom Authenticator And Integration | Pendiente | Sin evidencia suficiente | Faltan registries, extension points y providers customizables |
 | 29 | Multi Tenancy Security Realms Cross Tenant Isolation And Tenant Authentication Policy | Pendiente | Sin evidencia suficiente | Faltan tenant context, realm resolution y aislamiento cross-tenant |
@@ -82,10 +82,10 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | 44 | Authentication Background Processing Async Security Task Maintenance Cleanup And Scheduled Operation | Pendiente | Sin evidencia suficiente | Faltan jobs de mantenimiento, limpieza y tareas asincronas del subsistema |
 | 45 | Rate Capacity Resource Governance Abuse Prevention And Denial Of Service Resilience | Pendiente | Sin evidencia suficiente | Faltan budgets de recurso, control de capacidad y resistencia DoS especifica |
 | 46 | Migration Legacy Credential Import Backward Compatibility And Progressive Security Upgrade | Pendiente | Sin evidencia suficiente | Faltan migracion de credenciales legadas y upgrade progresivo |
-| 47 | Developer Experience Facade Helper Configuration Bootstrap And Application Integration | Parcial | helper `auth()`, facade `Quantum/Facades/Auth.php`, `config/auth.php`, binding scoped/singleton en `Application.php`, `AuthManager` expone `context()`, `attempt()` y `login()` | Faltan middleware, provider dedicado y una API publica todavia mas coherente |
+| 47 | Developer Experience Facade Helper Configuration Bootstrap And Application Integration | Parcial | helper `auth()`, facade `Quantum/Facades/Auth.php`, `config/auth.php`, `AuthenticationServiceProvider.php`, `Quantum/Middlewares/AuthMiddleware.php`, `Application.php` delega el wiring del subsistema al provider | Falta una API publica todavia mas coherente y helpers/aliases complementarios |
 | 48 | Administration Operational Tooling Diagnostics Security Operations And Production Management | Pendiente | Sin evidencia suficiente | Faltan comandos, diagnosticos y tooling operacional del sistema Auth |
-| 49 | Reference Implementation Default Components Secure Defaults And Framework Integration | Parcial | Existe base integrada con `AuthManager`, `AuthenticationContextAccessor`, `AuthenticationOrchestrator`, `DefaultAuthenticatorResolver`, `LocalIdentityProvider`, `PasswordAuthenticator`, `SessionAuthenticator`, `config/auth.php`, repositorio de session en memoria/archivo y errores propios de Authentication | Faltan policy mas ricas, stores mas robustos y testing utilities |
-| 50 | System Integration And Final Architecture | Parcial | Hay integracion minima entre contracts, contextos, authenticators, sessions, bootstrap, kernel HTTP y pruebas del subsistema Auth | Falta el cierre end-to-end del sistema `Quantum/Auth` como plataforma coherente de autenticacion |
+| 49 | Reference Implementation Default Components Secure Defaults And Framework Integration | Parcial | Existe base integrada con `AuthManager`, `AuthenticationServiceProvider`, `AuthenticationContextAccessor`, `AuthenticationOrchestrator`, `DefaultAuthenticatorResolver`, `LocalIdentityProvider`, `PasswordAuthenticator`, `SessionAuthenticator`, `PasswordPolicy`, `Quantum/Middlewares/AuthMiddleware.php`, `config/auth.php`, repositorio de session en memoria/archivo y errores propios de Authentication | Faltan stores mas robustos, aliases complementarios y testing utilities |
+| 50 | System Integration And Final Architecture | Parcial | Hay integracion minima entre contracts, contextos, authenticators, sessions, `AuthenticationServiceProvider`, kernel HTTP, middleware `auth` y pruebas del subsistema Auth | Falta el cierre end-to-end del sistema `Quantum/Auth` como plataforma coherente de autenticacion |
 
 ## Bloque actualmente visible en codigo
 
@@ -93,7 +93,7 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 
 - `Quantum\Auth\AuthManager`
 - helper global `auth()`
-- binding scoped en `Application.php`
+- `AuthenticationServiceProvider.php`
 - prueba feature del scope por request
 
 Capacidad actual:
@@ -168,6 +168,7 @@ Capacidad actual:
 - `Runtime/DefaultAuthenticatorResolver.php`
 - `Quantum/Facades/Auth.php`
 - `config/auth.php`
+- `AuthenticationServiceProvider.php`
 - expiracion configurable de session en `AuthManager`
 - pruebas `DefaultAuthenticatorResolverTest.php` y casos facade/expiry en `AuthManagerTest.php`
 
@@ -176,7 +177,8 @@ Capacidad actual:
 - separar la seleccion de authenticators del orchestrator,
 - exponer API estatica ergonomica via `Auth`,
 - cargar configuracion inicial de auth desde `config/auth.php`,
-- y endurecer la session con expiracion configurable y limpieza de cookie al expirar.
+- endurecer la session con expiracion configurable y limpieza de cookie al expirar,
+- y delegar el wiring del subsistema a un provider dedicado.
 
 ### 6. Elegibilidad, errores y storage configurable
 
@@ -196,7 +198,39 @@ Capacidad actual:
 - exponer `attemptOrFail()` para flujos que necesitan semantica de excepcion,
 - y elegir storage de session `memory` o `file` por configuracion.
 
-### 7. Infraestructura adyacente ya presente en el framework
+### 7. Password policy y lifecycle hardening
+
+- `Contracts/PasswordPolicyInterface.php`
+- `Contracts/PasswordRehashingIdentityProviderInterface.php`
+- `Passwords/PasswordPolicy.php`
+- `Identity/LocalIdentityProvider.php`
+- extensiones de `AuthenticationSessionRepositoryInterface`
+- `purgeExpired()` y `deleteForIdentity()` en repositorios `memory/file`
+- `rotate_on_recover` y `revoke_others_on_login` en `config/auth.php`
+- rotacion y revocacion integradas en `AuthManager`
+
+Capacidad actual:
+
+- validar credenciales de password contra una policy explicita,
+- rehashear y persistir hash actualizado cuando el provider local usa `storage_path`,
+- purgar sesiones expiradas de forma proactiva,
+- rotar la session al recuperarla si la configuracion lo exige,
+- y revocar otras sesiones del mismo identity al hacer login.
+
+### 8. Provider y middleware de integracion
+
+- `AuthenticationServiceProvider.php`
+- `Quantum/Middlewares/AuthMiddleware.php`
+- alias `auth` resuelto por `MiddlewareAliasRegistry`
+- pruebas feature de ruta protegida en `AuthManagerTest.php`
+
+Capacidad actual:
+
+- registrar el subsistema Authentication desde un provider dedicado,
+- proteger rutas HTTP con el alias `auth`,
+- y mantener el wiring del framework alineado con el patron de providers existente.
+
+### 9. Infraestructura adyacente ya presente en el framework
 
 - `AuthenticationRequired` en Controllers Security
 - `AuthenticationStrength`
@@ -220,7 +254,8 @@ Motivo:
 - ya existe session auth minima entre requests,
 - ya existe resolver, facade y configuracion inicial,
 - ya existe elegibilidad minima, failure handling basico y driver file,
-- pero aun faltan politicas mas ricas, storage mas robusto y endurecimiento adicional.
+- ya existe password policy y hardening basico del lifecycle de session,
+- pero aun faltan stores distribuidos, lifecycle completo de credenciales y endurecimiento adicional.
 
 ### Prioridad media
 
@@ -237,7 +272,7 @@ Motivo:
 
 ## Orden recomendado para seguir desarrollando
 
-1. consolidar `11 + 12 + 22 + 25 + 49`,
+1. consolidar `11 + 12 + 22 + 49`,
 2. despues abrir `26 + 36 + 37`,
 3. continuar con `13 + 14 + 15 + 19 + 20 + 21`,
 4. y finalmente expandir federation, passkeys, distributed runtime y operacion avanzada.

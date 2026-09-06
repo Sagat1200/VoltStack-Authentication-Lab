@@ -66,15 +66,21 @@ Hoy ya existe una base minima ampliada:
 - `DefaultAuthenticatorResolver`
 - facade `Auth`
 - `config/auth.php`
+- `AuthenticationServiceProvider`
+- middleware alias `auth`
 - `IdentitySecurityState`
 - excepciones propias de Authentication
 - `attemptOrFail()`
 - `FileAuthenticationSessionRepository`
+- `PasswordPolicy`
+- upgrade persistente inicial de hash usando `storage_path`
+- purga, rotacion y revocacion basica de session
 - pruebas unitarias y feature del lenguaje base y del request scope
 - pruebas del flujo minimo de password authentication
 - pruebas del flujo minimo de session authentication
 - pruebas de facade, resolver y expiracion minima de session
 - pruebas de elegibilidad y driver file de session
+- pruebas de password policy, rotation y revocation
 
 Por tanto, el plan debe preservar compatibilidad con:
 
@@ -377,7 +383,7 @@ Convertir el core en experiencia de desarrollo usable.
 1. helper `auth()` sigue funcionando,
 2. `Application.php` delega a provider dedicado,
 3. Controllers Security puede consumir `AuthenticationContext` real,
-4. ruta o middleware `auth` puede evolucionar sobre este core.
+4. ruta o middleware `auth` ya puede apoyarse directamente sobre este core.
 
 ### Tests minimos
 
@@ -394,13 +400,15 @@ Parcialmente implementada:
 - existe `config/auth.php`,
 - `AuthManager` ya expone `attempt()`, `login()`, `logout()` y `context()`,
 - existe `DefaultAuthenticatorResolver`,
+- existe `AuthenticationServiceProvider`,
+- existe middleware alias `auth`,
 - y la session minima usa configuracion de cookie y expiracion.
 
 Falta en esta fase:
 
-- provider dedicado del subsistema,
-- middleware o alias de auth,
-- y una API publica aun mas pulida para adopcion de framework.
+- entry points complementarios como `guest`,
+- una API publica aun mas pulida para adopcion de framework,
+- y alineacion mas profunda con Controllers Security.
 
 ## Fase 6 - Endurecimiento minimo para declarar V1
 
@@ -423,13 +431,14 @@ Parcialmente implementada:
 - existen errores propios de Authentication,
 - existe elegibilidad minima de identidad,
 - `attemptOrFail()` ya permite flujos con excepcion,
-- y el storage de session puede ser `memory` o `file`.
+- el storage de session puede ser `memory` o `file`,
+- y existe upgrade persistente inicial de hash para provider local con `storage_path`.
 
 Falta en esta fase:
 
-- policy formal de password,
-- rotacion y revocacion avanzadas,
+- revocacion distribuida,
 - un modelo mas completo de errores por mecanismo,
+- entry points complementarios,
 - y stores mas robustos para despliegues reales.
 
 ### Criterio de cierre de V1
@@ -555,24 +564,24 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-008
+### DV-AUTH-010
 
 Alcance sugerido:
 
-- endurecimiento del flujo base
-- consolidacion de password + session
+- coordinacion de sesiones mas robusta
+- denial model y entry points mas completos
 
 Entregables minimos:
 
-1. policy mas explicita de password.
-2. rotacion y revocacion de session.
-3. cleanup y endurecimiento del lifecycle.
-4. posible provider dedicado del subsistema.
-5. taxonomy mas rica de fallos.
-6. pruebas de revocacion y hardening.
+1. stores de session mas robustos o distribuidos.
+2. middleware / aliases complementarios como `guest`.
+3. taxonomy mas rica de fallos y denials.
+4. alineacion con Controllers Security y `AuthenticationContext`.
+5. pruebas de integracion y hardening adicionales.
+6. evolucion del provider local hacia fuentes persistentes mas ricas.
 
 Resultado esperado:
 
-- el flujo password + session gana controles mas fuertes de seguridad operacional,
-- Authentication deja una base mas creible para uso real,
-- y el subsistema queda mejor preparado para crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime y entry points,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
