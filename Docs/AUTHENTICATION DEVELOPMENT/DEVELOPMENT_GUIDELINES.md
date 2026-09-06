@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Session Coordination Distribuida + Assurance Denials + Alineacion Con Controllers Security`
+`Session Coordination Distribuida + Assurance Profile Explicito + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -352,7 +352,7 @@ Documentos objetivo:
 ### Entregables minimos sugeridos
 
 1. revocacion avanzada o distribuida de session.
-2. denials por assurance o strength requerida.
+2. assurance profile explicito en `AuthenticationContext` o equivalente.
 3. denial model mas rico para distinguir `required`, `guest-only`, `stale-session` y assurance insufficiente.
 4. alineacion de `AuthenticationContext` con Controllers Security.
 5. suite de pruebas de integracion del flujo endurecido.

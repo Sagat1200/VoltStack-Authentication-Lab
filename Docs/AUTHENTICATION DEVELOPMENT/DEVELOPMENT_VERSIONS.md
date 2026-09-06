@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-05`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y denials coherentes para guest_only y stale_session`
-- Foco del siguiente ciclo recomendado: `session coordination mas robusta + assurance denials + alineacion con Controllers Security`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y denials coherentes para guest_only, stale_session y strength insufficiente`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida + assurance profile explicito + alineacion con Controllers Security`
 
 ## Versionado de desarrollo
 
@@ -346,6 +346,28 @@ Sirve como control operativo de:
   - falta alinear mejor `AuthenticationContext` con Controllers Security,
   - y el subsistema aun no ofrece stores distribuidos ni revocacion multi-nodo.
 
+### DV-AUTH-012
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `22`, `25`, `37`, `47`, `49`, `50`
+- Alcance objetivo:
+  - reutilizar el vocabulario de `AuthenticationStrength` de Controllers Security desde el middleware `auth`,
+  - soportar `minimum_strength` en la metadata de ruta `auth`,
+  - y responder con `authentication_strength_insufficient` cuando una credencial autenticada no alcanza la assurance requerida.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/AuthMiddleware.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/QuantumExceptionHandlerTest.php`
+- Resultado:
+  - una ruta protegida por `auth` ya puede exigir `minimum_strength` mediante metadata de ruta,
+  - el denial por assurance insuficiente reutiliza `AuthenticationRequiredException` de Controllers Security,
+  - y la respuesta HTTP incluye `reason_code`, challenge metadata y `WWW-Authenticate` coherentes con el mapper de Security.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado,
+  - falta un assurance profile explicito dentro de `AuthenticationContext` y no solo derivado por middleware,
+  - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
+  - y el subsistema aun no cubre MFA real ni elevation/step-up.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -376,6 +398,8 @@ Sirve como control operativo de:
 17. Middleware alias `guest` para rutas exclusivas de invitados.
 18. Denial `auth.guest_only` coherente sin challenge headers improcedentes.
 19. Denial `auth.stale_session` coherente para sesiones expiradas o invalidas en rutas protegidas.
+20. Denial `authentication_strength_insufficient` reutilizando el contrato de Controllers Security.
+21. Metadata de ruta `auth.minimum_strength` respetada por el middleware `auth`.
 
 ### Ya preparado de forma adyacente
 
@@ -391,7 +415,7 @@ Sirve como control operativo de:
 3. Password authentication con lifecycle formal mas alla del rehash persistente inicial.
 4. Session authentication con revocacion distribuida y stores mas robustos.
 5. Identity eligibility y estado de seguridad mas ricos.
-6. Failure handling coherente y mas completo del subsistema mas alla de `guest_only` y `stale_session`.
+6. Failure handling coherente y mas completo del subsistema mas alla de `guest_only`, `stale_session` y strength insufficiente.
 7. Testing system formal del subsistema.
 
 ### Aun no desarrollado con evidencia suficiente
@@ -423,13 +447,13 @@ Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 ### Motivo
 
 - ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
-- el valor inmediato ahora esta en endurecer la coordinacion de session, incorporar denials por assurance y alinear Authentication con la capa adyacente de Security,
+- el valor inmediato ahora esta en endurecer la coordinacion de session, volver explicito el assurance profile y alinear Authentication con la capa adyacente de Security,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
 1. revocacion distribuida o store mas robusto para session.
-2. denials adicionales como `auth.assurance_required` o equivalentes.
+2. assurance profile explicito dentro de `AuthenticationContext` o equivalente.
 3. entry points complementarios adicionales sobre `auth/guest`.
 4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
 5. API publica minima:

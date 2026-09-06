@@ -566,17 +566,17 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-012
+### DV-AUTH-013
 
 Alcance sugerido:
 
 - coordinacion de sesiones mas robusta
-- denial model mas rico para assurance y seguridad contextual
+- assurance profile explicito y seguridad contextual
 
 Entregables minimos:
 
 1. stores de session mas robustos o distribuidos.
-2. manejo explicito de assurance insuficiente o una variante equivalente.
+2. assurance profile explicito dentro de `AuthenticationContext` o equivalente.
 3. taxonomy mas rica de fallos y denials.
 4. alineacion con Controllers Security y `AuthenticationContext`.
 5. pruebas de integracion y hardening adicionales.
