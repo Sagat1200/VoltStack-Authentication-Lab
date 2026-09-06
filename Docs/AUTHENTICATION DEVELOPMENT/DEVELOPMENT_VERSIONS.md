@@ -13,9 +13,9 @@ Sirve como control operativo de:
 
 ## Corte actual
 
-- Fecha de actualizacion: `2026-09-05`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y denials coherentes para guest_only, stale_session y strength insufficiente`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida + assurance profile explicito + alineacion con Controllers Security`
+- Fecha de actualizacion: `2026-09-06`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y assurance profile explicito en AuthenticationContext`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida + assurance multi-factor real + alineacion con Controllers Security`
 
 ## Versionado de desarrollo
 
@@ -368,6 +368,34 @@ Sirve como control operativo de:
   - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
   - y el subsistema aun no cubre MFA real ni elevation/step-up.
 
+### DV-AUTH-013
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `22`, `37`, `47`, `49`, `50`
+- Alcance objetivo:
+  - volver explicito el assurance profile dentro de `AuthenticationContext`,
+  - conservar `authentication_strength` y `authentication_assurance_profile` al autenticar, loguear y restaurar sessions,
+  - y hacer que el middleware `auth` consuma ese dato explicito en vez de derivarlo localmente.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Support/AuthenticationAssurance.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Context/AuthenticationContext.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Context/AuthenticationContextAccessor.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/PasswordAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/SessionAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/AuthMiddleware.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+- Resultado:
+  - `AuthenticationContext` ya expone `authenticationStrength()` y `authenticationAssuranceProfile()`,
+  - el login por password, el `setUser()` manual y la restauracion de session conservan el assurance profile dentro del contexto,
+  - y el middleware `auth` valida `minimum_strength` leyendo ese estado explicito del subsistema.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado,
+  - falta assurance multi-factor real y no solo clasificacion `Password`,
+  - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
+  - y el subsistema aun no cubre elevation/step-up ni bearer auth real.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -400,6 +428,8 @@ Sirve como control operativo de:
 19. Denial `auth.stale_session` coherente para sesiones expiradas o invalidas en rutas protegidas.
 20. Denial `authentication_strength_insufficient` reutilizando el contrato de Controllers Security.
 21. Metadata de ruta `auth.minimum_strength` respetada por el middleware `auth`.
+22. `AuthenticationContext` expone `authenticationStrength()` y `authenticationAssuranceProfile()`.
+23. Login, session restore y `setUser()` conservan `authentication_strength` y `authentication_assurance_profile`.
 
 ### Ya preparado de forma adyacente
 
@@ -447,13 +477,13 @@ Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 ### Motivo
 
 - ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
-- el valor inmediato ahora esta en endurecer la coordinacion de session, volver explicito el assurance profile y alinear Authentication con la capa adyacente de Security,
+- el valor inmediato ahora esta en endurecer la coordinacion de session, incorporar assurance multi-factor real y alinear Authentication con la capa adyacente de Security,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
 1. revocacion distribuida o store mas robusto para session.
-2. assurance profile explicito dentro de `AuthenticationContext` o equivalente.
+2. assurance multi-factor real o step-up sobre `AuthenticationContext`.
 3. entry points complementarios adicionales sobre `auth/guest`.
 4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
 5. API publica minima:
