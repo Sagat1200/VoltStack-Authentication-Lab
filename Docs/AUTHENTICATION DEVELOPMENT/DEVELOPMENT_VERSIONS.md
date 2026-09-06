@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-06`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y assurance profile explicito en AuthenticationContext`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida + assurance multi-factor real + alineacion con Controllers Security`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y assurance multi-factor local persistida en AuthenticationContext`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida + step-up/entry points adicionales + alineacion con Controllers Security`
 
 ## Versionado de desarrollo
 
@@ -396,6 +396,34 @@ Sirve como control operativo de:
   - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
   - y el subsistema aun no cubre elevation/step-up ni bearer auth real.
 
+### DV-AUTH-014
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `06`, `08`, `11`, `12`, `22`, `37`, `49`, `50`
+- Alcance objetivo:
+  - introducir una forma real y verificable de elevar assurance dentro del flujo local de password,
+  - soportar segundo factor en `LocalIdentityProvider`,
+  - y persistir la assurance `MultiFactor` en el contexto y en la session restaurada.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/MultiFactorIdentityProviderInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Credentials/PasswordCredentials.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Identity/LocalIdentityProvider.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/PasswordAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/SecondFactorRequiredException.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/InvalidSecondFactorException.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/LocalIdentityProviderTest.php`
+- Resultado:
+  - el provider local ya puede verificar un segundo factor configurable,
+  - password + `second_factor` eleva el contexto a `MultiFactor` con `amr = ['pwd', 'mfa']`,
+  - y una session nacida con MFA conserva esa assurance al recuperarse y puede satisfacer rutas con `minimum_strength = MultiFactor`.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado,
+  - falta step-up operativo sin re-login completo,
+  - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
+  - y el subsistema aun no cubre bearer auth real ni MFA basada en TOTP/WebAuthn.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -430,6 +458,8 @@ Sirve como control operativo de:
 21. Metadata de ruta `auth.minimum_strength` respetada por el middleware `auth`.
 22. `AuthenticationContext` expone `authenticationStrength()` y `authenticationAssuranceProfile()`.
 23. Login, session restore y `setUser()` conservan `authentication_strength` y `authentication_assurance_profile`.
+24. `LocalIdentityProvider` soporta segundo factor configurable para elevar assurance a `MultiFactor`.
+25. Password + `second_factor` conserva `amr` y assurance MFA al restaurar la session.
 
 ### Ya preparado de forma adyacente
 
@@ -452,7 +482,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. MFA y step-up.
+3. step-up operativo mas alla del login MFA inicial.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.
@@ -477,13 +507,13 @@ Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 ### Motivo
 
 - ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
-- el valor inmediato ahora esta en endurecer la coordinacion de session, incorporar assurance multi-factor real y alinear Authentication con la capa adyacente de Security,
+- el valor inmediato ahora esta en endurecer la coordinacion de session, habilitar step-up sin re-login completo y alinear Authentication con la capa adyacente de Security,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
 1. revocacion distribuida o store mas robusto para session.
-2. assurance multi-factor real o step-up sobre `AuthenticationContext`.
+2. step-up o elevation sobre `AuthenticationContext` sin re-login completo.
 3. entry points complementarios adicionales sobre `auth/guest`.
 4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
 5. API publica minima:
