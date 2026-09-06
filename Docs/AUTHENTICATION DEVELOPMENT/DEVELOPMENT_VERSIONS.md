@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-05`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y denial guest_only coherente`
-- Foco del siguiente ciclo recomendado: `session coordination mas robusta + stale-session/entry points adicionales + alineacion con Controllers Security`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y denials coherentes para guest_only y stale_session`
+- Foco del siguiente ciclo recomendado: `session coordination mas robusta + assurance denials + alineacion con Controllers Security`
 
 ## Versionado de desarrollo
 
@@ -322,6 +322,30 @@ Sirve como control operativo de:
   - falta alinear mejor `AuthenticationContext` con Controllers Security,
   - y el subsistema aun no ofrece stores distribuidos ni denials por assurance.
 
+### DV-AUTH-011
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `22`, `25`, `49`, `50`
+- Alcance objetivo:
+  - distinguir una session obsoleta o invalida del simple estado no autenticado,
+  - convertir ese caso en un denial explicito `auth.stale_session`,
+  - y mantener la limpieza de cookie dentro del recovery actual del subsistema.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/StaleAuthenticationSessionException.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/AuthExceptionMapper.php`
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/AuthMiddleware.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/QuantumExceptionHandlerTest.php`
+- Resultado:
+  - una ruta protegida por `auth` ya distingue entre ausencia de autenticacion y session vieja o invalida,
+  - el framework responde `401` con `auth.stale_session` sin `WWW-Authenticate` cuando recibe una credencial de session obsoleta,
+  - y el flujo sigue limpiando la cookie de auth cuando la session deja de ser recuperable.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado,
+  - faltan denials por assurance o strength requerida,
+  - falta alinear mejor `AuthenticationContext` con Controllers Security,
+  - y el subsistema aun no ofrece stores distribuidos ni revocacion multi-nodo.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -351,6 +375,7 @@ Sirve como control operativo de:
 16. Upgrade persistente de password hash cuando el provider local usa `storage_path`.
 17. Middleware alias `guest` para rutas exclusivas de invitados.
 18. Denial `auth.guest_only` coherente sin challenge headers improcedentes.
+19. Denial `auth.stale_session` coherente para sesiones expiradas o invalidas en rutas protegidas.
 
 ### Ya preparado de forma adyacente
 
@@ -366,7 +391,7 @@ Sirve como control operativo de:
 3. Password authentication con lifecycle formal mas alla del rehash persistente inicial.
 4. Session authentication con revocacion distribuida y stores mas robustos.
 5. Identity eligibility y estado de seguridad mas ricos.
-6. Failure handling coherente y mas completo del subsistema mas alla de `guest_only`.
+6. Failure handling coherente y mas completo del subsistema mas alla de `guest_only` y `stale_session`.
 7. Testing system formal del subsistema.
 
 ### Aun no desarrollado con evidencia suficiente
@@ -389,22 +414,22 @@ Sirve como control operativo de:
 Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 
 - `25_AUTHENTICATION_FAILURE_ERROR_EXCEPTION_DENIAL_AND_SECURITY_RESPONSE_HANDLING_SYSTEM.md`
-- `11_PASSWORD_AUTHENTICATION_HASHING_POLICY_AND_CREDENTIAL_LIFECYCLE_SYSTEM.md`
 - `12_SESSION_AUTHENTICATION_PERSISTENCE_CONTEXT_RESTORATION_AND_SESSION_LIFECYCLE_SYSTEM.md`
 - `22_AUTHENTICATION_LOGIN_LOGOUT_SIGN_IN_SIGN_OUT_ENTRY_POINT_AND_USER_AUTHENTICATION_FLOW_SYSTEM.md`
 - `37_AUTHENTICATION_ASSURANCE_LEVEL_AUTHENTICATION_CONTEXT_AND_TRUST_CLASSIFICATION_SYSTEM.md`
 - `49_AUTHENTICATION_REFERENCE_IMPLEMENTATION_DEFAULT_COMPONENTS_SECURE_DEFAULTS_AND_FRAMEWORK_INTEGRATION_SYSTEM.md`
+- `30_AUTHENTICATION_DISTRIBUTED_SYSTEM_CLUSTER_SESSION_COORDINATION_REVOCATION_CONSISTENCY_AND_MULTI_NODE_RUNTIME.md`
 
 ### Motivo
 
 - ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
-- el valor inmediato ahora esta en endurecer la coordinacion de session, manejar mejor entry points y alinear Authentication con la capa adyacente de Security,
+- el valor inmediato ahora esta en endurecer la coordinacion de session, incorporar denials por assurance y alinear Authentication con la capa adyacente de Security,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
 1. revocacion distribuida o store mas robusto para session.
-2. denials adicionales como `stale-session`, `auth.assurance_required` o equivalentes.
+2. denials adicionales como `auth.assurance_required` o equivalentes.
 3. entry points complementarios adicionales sobre `auth/guest`.
 4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
 5. API publica minima:
