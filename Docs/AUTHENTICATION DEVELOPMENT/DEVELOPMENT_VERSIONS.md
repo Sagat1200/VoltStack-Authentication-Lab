@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-05`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado y middleware alias auth`
-- Foco del siguiente ciclo recomendado: `session coordination mas robusta + denial taxonomy mas rica + entry points auth/guest mas completos`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest y denial guest_only coherente`
+- Foco del siguiente ciclo recomendado: `session coordination mas robusta + stale-session/entry points adicionales + alineacion con Controllers Security`
 
 ## Versionado de desarrollo
 
@@ -296,6 +296,32 @@ Sirve como control operativo de:
   - el provider local aun no cubre multiples fuentes persistentes o escenarios distribuidos,
   - y la integracion con security/controller policy todavia no consume assurance/contexto enriquecido.
 
+### DV-AUTH-010
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `22`, `25`, `47`, `49`, `50`
+- Alcance objetivo:
+  - introducir el middleware complementario `guest`,
+  - agregar un denial explicito `guest_only` sin challenge headers indebidos,
+  - y reforzar la integracion del subsistema con un mapper propio para errores operativos de entry points.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/GuestMiddleware.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/GuestOnlyException.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/AuthExceptionMapper.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthenticationServiceProvider.php`
+  - `vendor/voltstack/framework/src/Platform/Application.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/QuantumExceptionHandlerTest.php`
+- Resultado:
+  - el framework ya dispone de alias `guest` para rutas exclusivas de invitados,
+  - los usuarios autenticados reciben un `403` con `auth.guest_only` sin `WWW-Authenticate`,
+  - y el denial queda cubierto tanto a nivel feature como en el `ExceptionHandler`.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado,
+  - faltan entry points adicionales como `stale-session` o guest/auth variants mas ricas,
+  - falta alinear mejor `AuthenticationContext` con Controllers Security,
+  - y el subsistema aun no ofrece stores distribuidos ni denials por assurance.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -323,6 +349,8 @@ Sirve como control operativo de:
 14. `AuthenticationServiceProvider` dedicado para integrar el subsistema.
 15. Middleware alias `auth` para proteger rutas del framework.
 16. Upgrade persistente de password hash cuando el provider local usa `storage_path`.
+17. Middleware alias `guest` para rutas exclusivas de invitados.
+18. Denial `auth.guest_only` coherente sin challenge headers improcedentes.
 
 ### Ya preparado de forma adyacente
 
@@ -338,7 +366,7 @@ Sirve como control operativo de:
 3. Password authentication con lifecycle formal mas alla del rehash persistente inicial.
 4. Session authentication con revocacion distribuida y stores mas robustos.
 5. Identity eligibility y estado de seguridad mas ricos.
-6. Failure handling coherente y mas completo del subsistema.
+6. Failure handling coherente y mas completo del subsistema mas alla de `guest_only`.
 7. Testing system formal del subsistema.
 
 ### Aun no desarrollado con evidencia suficiente
@@ -360,24 +388,24 @@ Sirve como control operativo de:
 
 Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 
-- `10_IDENTITY_SECURITY_STATE_ACCOUNT_STATUS_AND_AUTHENTICATION_ELIGIBILITY_SYSTEM.md`
 - `25_AUTHENTICATION_FAILURE_ERROR_EXCEPTION_DENIAL_AND_SECURITY_RESPONSE_HANDLING_SYSTEM.md`
 - `11_PASSWORD_AUTHENTICATION_HASHING_POLICY_AND_CREDENTIAL_LIFECYCLE_SYSTEM.md`
 - `12_SESSION_AUTHENTICATION_PERSISTENCE_CONTEXT_RESTORATION_AND_SESSION_LIFECYCLE_SYSTEM.md`
 - `22_AUTHENTICATION_LOGIN_LOGOUT_SIGN_IN_SIGN_OUT_ENTRY_POINT_AND_USER_AUTHENTICATION_FLOW_SYSTEM.md`
+- `37_AUTHENTICATION_ASSURANCE_LEVEL_AUTHENTICATION_CONTEXT_AND_TRUST_CLASSIFICATION_SYSTEM.md`
 - `49_AUTHENTICATION_REFERENCE_IMPLEMENTATION_DEFAULT_COMPONENTS_SECURE_DEFAULTS_AND_FRAMEWORK_INTEGRATION_SYSTEM.md`
 
 ### Motivo
 
 - ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
-- el valor inmediato ahora esta en endurecer la coordinacion de session y completar la semantica operativa del subsistema,
+- el valor inmediato ahora esta en endurecer la coordinacion de session, manejar mejor entry points y alinear Authentication con la capa adyacente de Security,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
 1. revocacion distribuida o store mas robusto para session.
-2. denial taxonomy mas rica y responses diferenciadas por entry point.
-3. entry points complementarios como `guest` o variantes de middleware.
+2. denials adicionales como `stale-session`, `auth.assurance_required` o equivalentes.
+3. entry points complementarios adicionales sobre `auth/guest`.
 4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
 5. API publica minima:
    - `Auth::check()`

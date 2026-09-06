@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Session Coordination Mas Robusta + Denial Model Mas Rico + Entry Points Complementarios`
+`Session Coordination Mas Robusta + Stale Session Handling + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -352,8 +352,8 @@ Documentos objetivo:
 ### Entregables minimos sugeridos
 
 1. revocacion avanzada o distribuida de session.
-2. middleware complementario como `guest` o variantes equivalentes.
-3. denial model mas rico para distinguir `required`, `guest-only`, `stale-session` u otros entry points.
+2. manejo explicito de `stale-session` o variantes equivalentes.
+3. denial model mas rico para distinguir `required`, `guest-only`, `stale-session` y assurance insufficiente.
 4. alineacion de `AuthenticationContext` con Controllers Security.
 5. suite de pruebas de integracion del flujo endurecido.
 6. base para stores persistentes adicionales del provider local o providers mutables mas ricos.

@@ -68,6 +68,7 @@ Hoy ya existe una base minima ampliada:
 - `config/auth.php`
 - `AuthenticationServiceProvider`
 - middleware alias `auth`
+- middleware alias `guest`
 - `IdentitySecurityState`
 - excepciones propias de Authentication
 - `attemptOrFail()`
@@ -402,11 +403,12 @@ Parcialmente implementada:
 - existe `DefaultAuthenticatorResolver`,
 - existe `AuthenticationServiceProvider`,
 - existe middleware alias `auth`,
+- existe middleware alias `guest`,
 - y la session minima usa configuracion de cookie y expiracion.
 
 Falta en esta fase:
 
-- entry points complementarios como `guest`,
+- entry points adicionales mas alla de `auth/guest`,
 - una API publica aun mas pulida para adopcion de framework,
 - y alineacion mas profunda con Controllers Security.
 
@@ -564,17 +566,17 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-010
+### DV-AUTH-011
 
 Alcance sugerido:
 
 - coordinacion de sesiones mas robusta
-- denial model y entry points mas completos
+- denial model mas rico para sesiones obsoletas y assurance
 
 Entregables minimos:
 
 1. stores de session mas robustos o distribuidos.
-2. middleware / aliases complementarios como `guest`.
+2. manejo explicito de `stale-session` o una variante equivalente.
 3. taxonomy mas rica de fallos y denials.
 4. alineacion con Controllers Security y `AuthenticationContext`.
 5. pruebas de integracion y hardening adicionales.

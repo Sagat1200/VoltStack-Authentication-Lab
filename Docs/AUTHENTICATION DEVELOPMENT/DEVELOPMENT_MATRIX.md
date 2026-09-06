@@ -57,10 +57,10 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | 19 | Throttling Rate Limiting Brute Force Credential Stuffing And Abuse Protection | Pendiente | Sin evidencia suficiente | Falta abuse protection manager, counters y decisiones pre/post authentication |
 | 20 | Risk Engine Adaptive Authentication And Security Signal | Pendiente | Sin evidencia suficiente | Faltan signal providers, risk engine y politicas adaptativas |
 | 21 | Device Trust Device Identity And Trusted Device Credential | Pendiente | Sin evidencia suficiente | Faltan device references, trusted device credentials y evaluacion de confianza |
-| 22 | Login Logout Sign In Sign Out Entry Point And User Authentication Flow | Parcial | `AuthManager` soporta `attempt()`, `attemptOrFail()`, `login()`, `logout()`, `setUser()` y `context()`; facade `Auth`; `Quantum/Middlewares/AuthMiddleware.php`; `AuthManagerTest.php` cubre login valido, invalido, policy, restauracion, expiracion, rotacion, revocacion, logout y ruta protegida | Faltan entry points complementarios como `guest` y politicas de sign-in/sign-out mas ricas |
+| 22 | Login Logout Sign In Sign Out Entry Point And User Authentication Flow | Parcial | `AuthManager` soporta `attempt()`, `attemptOrFail()`, `login()`, `logout()`, `setUser()` y `context()`; facade `Auth`; `Quantum/Middlewares/AuthMiddleware.php`; `Quantum/Middlewares/GuestMiddleware.php`; `AuthManagerTest.php` cubre login valido, invalido, policy, restauracion, expiracion, rotacion, revocacion, logout, ruta protegida y ruta guest-only | Faltan entry points adicionales y politicas de sign-in/sign-out mas ricas |
 | 23 | Events Hooks Listeners Subscribers And Extension Lifecycle | Pendiente | Sin evidencia suficiente | Faltan eventos propios de Authentication y puntos de extension del lifecycle |
 | 24 | Audit Observability Logging Metrics Tracing And Explainability | Pendiente | Sin evidencia suficiente dentro de `Quantum/Auth` | Faltan audit trail, logs estructurados, metricas y explicabilidad de decisiones |
-| 25 | Failure Error Exception Denial And Security Response Handling | Parcial | `Exceptions/AuthenticationException.php`, `InvalidCredentialsException.php`, `IdentityNotEligibleException.php`, `AuthenticationRequiredException.php`, `attemptOrFail()`, `Quantum/Middlewares/AuthMiddleware.php`, integracion en `Quantum/Exceptions/ExceptionHandler.php` con `401`, `WWW-Authenticate` y `X-Volt-Error-Code` | Falta mapa mas completo de errores, denial policies diferenciadas y respuestas especificas por mecanismo |
+| 25 | Failure Error Exception Denial And Security Response Handling | Parcial | `Exceptions/AuthenticationException.php`, `InvalidCredentialsException.php`, `IdentityNotEligibleException.php`, `AuthenticationRequiredException.php`, `GuestOnlyException.php`, `AuthExceptionMapper.php`, `attemptOrFail()`, `Quantum/Middlewares/AuthMiddleware.php`, `Quantum/Middlewares/GuestMiddleware.php`, integracion en `Quantum/Exceptions/ExceptionHandler.php` con `401/403`, `WWW-Authenticate` y `X-Volt-Error-Code` | Falta mapa mas completo de errores, denial policies diferenciadas y respuestas especificas por mecanismo |
 | 26 | Testing Verification Security Assurance And Conformance | Parcial | `tests/Feature/AuthManagerTest.php`, `tests/Unit/AuthDomainModelTest.php`, `tests/Unit/LocalIdentityProviderTest.php`, `tests/Unit/AuthenticationSessionRepositoryTest.php`, `tests/Unit/DefaultAuthenticatorResolverTest.php`, `tests/Unit/FileAuthenticationSessionRepositoryTest.php`, `tests/Unit/PasswordPolicyTest.php` validan scope por request, facade, provider local, elegibilidad, policy, resolver, persistencia, rotation y revocation | Falta harness formal, concurrencia, endurecimiento y conformance |
 | 27 | Compilation Configuration Validation Cache Optimization And Runtime Performance | Parcial | existe `config/auth.php` con carga por `Bootstrapper::loadConfiguration()` y uso operativo en Auth/session | Faltan validacion, caches y optimizacion/metadata del subsistema |
 | 28 | Extensibility Plugin Provider Custom Authenticator And Integration | Pendiente | Sin evidencia suficiente | Faltan registries, extension points y providers customizables |
@@ -82,10 +82,10 @@ La documentacion `00_AUTHENTICATION_PROJECT_CONTEXT.md` se usa como contexto bas
 | 44 | Authentication Background Processing Async Security Task Maintenance Cleanup And Scheduled Operation | Pendiente | Sin evidencia suficiente | Faltan jobs de mantenimiento, limpieza y tareas asincronas del subsistema |
 | 45 | Rate Capacity Resource Governance Abuse Prevention And Denial Of Service Resilience | Pendiente | Sin evidencia suficiente | Faltan budgets de recurso, control de capacidad y resistencia DoS especifica |
 | 46 | Migration Legacy Credential Import Backward Compatibility And Progressive Security Upgrade | Pendiente | Sin evidencia suficiente | Faltan migracion de credenciales legadas y upgrade progresivo |
-| 47 | Developer Experience Facade Helper Configuration Bootstrap And Application Integration | Parcial | helper `auth()`, facade `Quantum/Facades/Auth.php`, `config/auth.php`, `AuthenticationServiceProvider.php`, `Quantum/Middlewares/AuthMiddleware.php`, `Application.php` delega el wiring del subsistema al provider | Falta una API publica todavia mas coherente y helpers/aliases complementarios |
+| 47 | Developer Experience Facade Helper Configuration Bootstrap And Application Integration | Parcial | helper `auth()`, facade `Quantum/Facades/Auth.php`, `config/auth.php`, `AuthenticationServiceProvider.php`, `Quantum/Middlewares/AuthMiddleware.php`, `Quantum/Middlewares/GuestMiddleware.php`, `Application.php` delega el wiring del subsistema al provider | Falta una API publica todavia mas coherente y helpers/aliases complementarios |
 | 48 | Administration Operational Tooling Diagnostics Security Operations And Production Management | Pendiente | Sin evidencia suficiente | Faltan comandos, diagnosticos y tooling operacional del sistema Auth |
-| 49 | Reference Implementation Default Components Secure Defaults And Framework Integration | Parcial | Existe base integrada con `AuthManager`, `AuthenticationServiceProvider`, `AuthenticationContextAccessor`, `AuthenticationOrchestrator`, `DefaultAuthenticatorResolver`, `LocalIdentityProvider`, `PasswordAuthenticator`, `SessionAuthenticator`, `PasswordPolicy`, `Quantum/Middlewares/AuthMiddleware.php`, `config/auth.php`, repositorio de session en memoria/archivo y errores propios de Authentication | Faltan stores mas robustos, aliases complementarios y testing utilities |
-| 50 | System Integration And Final Architecture | Parcial | Hay integracion minima entre contracts, contextos, authenticators, sessions, `AuthenticationServiceProvider`, kernel HTTP, middleware `auth` y pruebas del subsistema Auth | Falta el cierre end-to-end del sistema `Quantum/Auth` como plataforma coherente de autenticacion |
+| 49 | Reference Implementation Default Components Secure Defaults And Framework Integration | Parcial | Existe base integrada con `AuthManager`, `AuthenticationServiceProvider`, `AuthenticationContextAccessor`, `AuthenticationOrchestrator`, `DefaultAuthenticatorResolver`, `LocalIdentityProvider`, `PasswordAuthenticator`, `SessionAuthenticator`, `PasswordPolicy`, `AuthExceptionMapper.php`, `Quantum/Middlewares/AuthMiddleware.php`, `Quantum/Middlewares/GuestMiddleware.php`, `config/auth.php`, repositorio de session en memoria/archivo y errores propios de Authentication | Faltan stores mas robustos, aliases complementarios y testing utilities |
+| 50 | System Integration And Final Architecture | Parcial | Hay integracion minima entre contracts, contextos, authenticators, sessions, `AuthenticationServiceProvider`, kernel HTTP, middlewares `auth/guest` y pruebas del subsistema Auth | Falta el cierre end-to-end del sistema `Quantum/Auth` como plataforma coherente de autenticacion |
 
 ## Bloque actualmente visible en codigo
 
@@ -221,13 +221,15 @@ Capacidad actual:
 
 - `AuthenticationServiceProvider.php`
 - `Quantum/Middlewares/AuthMiddleware.php`
+- `Quantum/Middlewares/GuestMiddleware.php`
 - alias `auth` resuelto por `MiddlewareAliasRegistry`
+- alias `guest` resuelto por `MiddlewareAliasRegistry`
 - pruebas feature de ruta protegida en `AuthManagerTest.php`
 
 Capacidad actual:
 
 - registrar el subsistema Authentication desde un provider dedicado,
-- proteger rutas HTTP con el alias `auth`,
+- proteger rutas HTTP con los aliases `auth` y `guest`,
 - y mantener el wiring del framework alineado con el patron de providers existente.
 
 ### 9. Infraestructura adyacente ya presente en el framework
