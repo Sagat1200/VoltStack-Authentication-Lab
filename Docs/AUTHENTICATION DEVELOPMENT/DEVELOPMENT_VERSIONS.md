@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-08`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest, MFA local y step-up operativo persistido en AuthenticationContext`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida + denials y entry points adicionales + alineacion con Controllers Security`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local y step-up operativo persistido en AuthenticationContext`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida + denials de recovery/elevation mas ricos + alineacion con Controllers Security`
 
 ## Versionado de desarrollo
 
@@ -452,6 +452,33 @@ Sirve como control operativo de:
   - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
   - y el subsistema aun no cubre bearer auth real ni MFA basada en TOTP/WebAuthn.
 
+### DV-AUTH-016
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `05`, `06`, `08`, `12`, `22`, `25`, `37`, `47`, `49`, `50`
+- Alcance objetivo:
+  - introducir un entry point explicito para rutas MFA,
+  - expresar un denial propio de elevacion con `auth.step_up_required`,
+  - y mejorar la DX del framework con alias `mfa` y metadata fluida `Route::mfa()`.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/MfaMiddleware.php`
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/AuthMiddleware.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/StepUpRequiredException.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/AuthExceptionMapper.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthenticationServiceProvider.php`
+  - `vendor/voltstack/framework/src/Quantum/Routing/Route.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/QuantumExceptionHandlerTest.php`
+- Resultado:
+  - el framework ya ofrece `middleware('mfa')` como entry point explicito de elevacion,
+  - las rutas MFA responden con `auth.step_up_required` y headers propios cuando la session es solo de `Password`,
+  - y `Route::mfa()` permite expresar la intencion de step-up aun usando `middleware('auth')`.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado,
+  - faltan denials aun mas ricos alrededor de recovery distribuido y revocacion remota,
+  - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
+  - y el subsistema aun no cubre bearer auth real ni MFA basada en TOTP/WebAuthn.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -490,6 +517,9 @@ Sirve como control operativo de:
 25. Password + `second_factor` conserva `amr` y assurance MFA al restaurar la session.
 26. `AuthManager` soporta `stepUp()` y `stepUpOrFail()` sobre una session autenticada existente.
 27. `step-up` reemite session endurecida y conserva `amr`/assurance MFA para rutas que exigen `MultiFactor`.
+28. Alias `mfa` como entry point explicito del framework para rutas que requieren elevation.
+29. Denial `auth.step_up_required` coherente, sin `WWW-Authenticate`, con headers propios para el cliente.
+30. Metadata fluida `Route::mfa()` para expresar step-up junto a `middleware('auth')`.
 
 ### Ya preparado de forma adyacente
 
@@ -512,7 +542,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida de session y entry points adicionales alrededor de elevation.
+3. coordinacion distribuida de session y denials de recovery/elevation mas ricos.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.
@@ -537,13 +567,13 @@ Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 ### Motivo
 
 - ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
-- el valor inmediato ahora esta en endurecer la coordinacion de session, enriquecer denials y entry points y alinear Authentication con la capa adyacente de Security,
+- el valor inmediato ahora esta en endurecer la coordinacion de session, enriquecer denials de recovery/elevation y alinear Authentication con la capa adyacente de Security,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
 1. revocacion distribuida o store mas robusto para session.
-2. denials y entry points adicionales para recovery/elevation.
+2. denials y recovery coordinado para session stale/revocada en escenarios mas distribuidos.
 3. entry points complementarios adicionales sobre `auth/guest`.
 4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
 5. API publica minima:
