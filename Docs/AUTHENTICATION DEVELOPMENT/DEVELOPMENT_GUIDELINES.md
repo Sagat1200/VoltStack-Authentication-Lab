@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Session Coordination Distribuida + Step-Up Operativo + Alineacion Con Controllers Security`
+`Session Coordination Distribuida + Entry Points Y Denials Adicionales + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -352,8 +352,8 @@ Documentos objetivo:
 ### Entregables minimos sugeridos
 
 1. revocacion avanzada o distribuida de session.
-2. step-up o elevation sobre `AuthenticationContext` sin re-login completo.
-3. denial model mas rico para distinguir `required`, `guest-only`, `stale-session` y assurance insufficiente.
+2. entry points y denials adicionales para recovery/elevation.
+3. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `step_up` y assurance insufficiente.
 4. alineacion de `AuthenticationContext` con Controllers Security.
 5. suite de pruebas de integracion del flujo endurecido.
 6. base para stores persistentes adicionales del provider local o providers mutables mas ricos.
