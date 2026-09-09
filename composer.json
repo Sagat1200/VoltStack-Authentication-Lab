@@ -39,7 +39,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "VoltStack\\AuthenticationLab\\Tests\\": "tests/"
+            "VoltStack\\AuthenticationLab\\Tests\\": "test/"
         }
     },
     "extra": {

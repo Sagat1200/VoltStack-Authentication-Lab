@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-09`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida real + rotacion/replay-hardening de trusted-device credentials + policy/authorization multi-actor + tooling operativo mas rico`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints `can_forget/requires_reauthentication/revocation_scope/revocation_mode`, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida real + policy/authorization multi-actor mas amplia + security center distribuido para sessions y trusted devices`
 
 ## Versionado de desarrollo
 
@@ -747,6 +747,56 @@ Sirve como control operativo de:
   - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
   - y falta un scheduler/background processing mas completo para cleanup continuo, reconciliation multi-store y mantenimiento del posture de device.
 
+### DV-AUTH-026
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `21`, `22`, `26`, `39`, `42`, `47`, `49`
+- Alcance objetivo:
+  - endurecer la trusted-device credential cliente con rotacion cuando realmente reduce el challenge MFA,
+  - detectar el replay del credential anterior inmediato y revocar ese trusted device,
+  - y asegurar que el recovery de sesion no conserve `trusted` cuando el cookie presentado ya fue invalidado por replay.
+- Evidencia principal:
+  - `config/auth.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/PasswordAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Devices/TrustedDeviceCredentialValidator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Devices/TrustedDeviceCredentialValidationResult.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - el challenge reduction por trusted device ahora rota el secreto cliente `publicId.secret` y reemite un nuevo cookie duradero sin cambiar el `public_id` del record persistido,
+  - el validator conserva `previous_credential_hash` para detectar reuse inmediato del cookie anterior y revocar el trusted-device record cuando aparece un replay,
+  - una recuperacion de sesion con un trusted-device cookie replayed limpia el cookie, elimina la confianza actual del contexto y evita conservar `device_trust_state=trusted` por arrastre de atributos previos,
+  - y la suite feature cubre tanto la rotacion al reducir challenge como la revocacion del trusted device al reutilizar el credential anterior.
+- Gap natural posterior:
+  - la coordinacion de sesiones y trusted-device state sigue siendo local al store configurado,
+  - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
+  - falta management mas expresivo para posture de dispositivo, revocacion administrativa y security center distribuido,
+  - y falta un scheduler/background processing mas completo para cleanup continuo, reconciliation multi-store y mantenimiento del posture de device.
+
+### DV-AUTH-027
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `21`, `22`, `32`, `35`, `47`, `49`
+- Alcance objetivo:
+  - enriquecer el inventory de trusted devices con hints de management equivalentes a los de sessions,
+  - exigir fresh authentication para olvidar un trusted device remoto sin bloquear el self-forget del dispositivo actual,
+  - y alinear la semantica HTTP de esa revocacion remota con el denial ya usado por session management.
+- Evidencia principal:
+  - `config/auth.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Devices/TrustedDeviceSummary.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `trustedDevices()` ahora expone `can_forget`, `requires_reauthentication`, `revocation_scope` y `revocation_mode` para que el security center pueda presentar acciones mas honestas sobre cada dispositivo,
+  - `forgetTrustedDevice()` permite olvidar el dispositivo actual aunque la freshness window haya expirado, pero exige fresh auth cuando el target es un trusted device remoto,
+  - la respuesta HTTP de ese bloqueo reutiliza `auth.fresh_authentication_required` con `operation=trusted_device_revocation`,
+  - y la suite feature cubre tanto el self-forget con freshness vencida como el bloqueo de revocacion remota con hints correctos en el inventory.
+- Gap natural posterior:
+  - la coordinacion de sesiones y trusted-device state sigue siendo local al store configurado,
+  - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
+  - falta security center distribuido y revocacion administrativa mas amplia sobre sessions y trusted devices,
+  - y falta un scheduler/background processing mas completo para cleanup continuo, reconciliation multi-store y mantenimiento del posture de device.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -781,25 +831,27 @@ Sirve como control operativo de:
 21. Metadata de ruta `auth.minimum_strength` respetada por el middleware `auth`.
 22. `AuthenticationContext` expone `authenticationStrength()` y `authenticationAssuranceProfile()`.
 23. Trusted-device credential cliente duradera validada en runtime y usada para challenge reduction sin colapsar la semantica de assurance.
-24. Soporte HTTP para multiples `Set-Cookie` en el mismo response de Authentication.
-23. Login, session restore y `setUser()` conservan `authentication_strength` y `authentication_assurance_profile`.
-24. `LocalIdentityProvider` soporta segundo factor configurable para elevar assurance a `MultiFactor`.
-25. Password + `second_factor` conserva `amr` y assurance MFA al restaurar la session.
-26. `AuthManager` soporta `stepUp()` y `stepUpOrFail()` sobre una session autenticada existente.
-27. `step-up` reemite session endurecida y conserva `amr`/assurance MFA para rutas que exigen `MultiFactor`.
-28. Alias `mfa` como entry point explicito del framework para rutas que requieren elevation.
-29. Denial `auth.step_up_required` coherente, sin `WWW-Authenticate`, con headers propios para el cliente.
-30. Metadata fluida `Route::mfa()` para expresar step-up junto a `middleware('auth')`.
-31. Recovery de session con razones explicitas persistidas (`revoked`/`expired`) y denial `auth.revoked_session` para invalidacion activa.
-32. Cada sesion emitida posee `session_public_id` seguro para inventory/revocacion sin exponer el bearer secret.
-33. `AuthManager` ya permite listar sesiones propias, identificar la actual y revocar una sesion concreta o las demas sesiones del principal.
-34. El inventory de sesiones ya expone metadata reducida (`client_family`, `ip_prefix`, `label`, `last_activity_at`) sin almacenar ni devolver `User-Agent` o IP crudos.
-35. La revocacion remota de sesiones ya exige fresh authentication configurable y responde con `auth.fresh_authentication_required` cuando corresponde.
-36. El inventory ya expone hints de accion (`can_revoke`, `requires_reauthentication`) y metadata de device reducida (`client_platform`, `device_kind`) apta para UI de security center.
-37. Los repositorios de session ya soportan retencion minima y purga explicita de tombstones de recovery.
-38. El framework ya expone el comando `auth:sessions:cleanup` para cleanup operativo de sesiones expiradas y tombstones vencidos.
-39. El inventory ya expone `device_reference` pseudonimizado, `device_trust_state` y policy de revocacion mas expresiva (`revocation_scope`, `revocation_mode`) sin promocionar fingerprint derivado a trusted-device real.
-40. El subsistema ya soporta trusted-device records persistentes, alta del dispositivo actual con MFA y olvido/revocacion de trusted devices propios.
+24. El challenge reduction por trusted device ahora rota el cookie cliente y conserva `previous_credential_hash` para detectar replay inmediato del credential anterior.
+25. El replay del credential anterior revoca el trusted-device record, limpia el cookie y evita conservar `device_trust_state=trusted` durante el recovery.
+26. Soporte HTTP para multiples `Set-Cookie` en el mismo response de Authentication.
+27. Login, session restore y `setUser()` conservan `authentication_strength` y `authentication_assurance_profile`.
+28. `LocalIdentityProvider` soporta segundo factor configurable para elevar assurance a `MultiFactor`.
+29. Password + `second_factor` conserva `amr` y assurance MFA al restaurar la session.
+30. `AuthManager` soporta `stepUp()` y `stepUpOrFail()` sobre una session autenticada existente.
+31. `step-up` reemite session endurecida y conserva `amr`/assurance MFA para rutas que exigen `MultiFactor`.
+32. Alias `mfa` como entry point explicito del framework para rutas que requieren elevation.
+33. Denial `auth.step_up_required` coherente, sin `WWW-Authenticate`, con headers propios para el cliente.
+34. Metadata fluida `Route::mfa()` para expresar step-up junto a `middleware('auth')`.
+35. Recovery de session con razones explicitas persistidas (`revoked`/`expired`) y denial `auth.revoked_session` para invalidacion activa.
+36. Cada sesion emitida posee `session_public_id` seguro para inventory/revocacion sin exponer el bearer secret.
+37. `AuthManager` ya permite listar sesiones propias, identificar la actual y revocar una sesion concreta o las demas sesiones del principal.
+38. El inventory de sesiones ya expone metadata reducida (`client_family`, `ip_prefix`, `label`, `last_activity_at`) sin almacenar ni devolver `User-Agent` o IP crudos.
+39. La revocacion remota de sesiones ya exige fresh authentication configurable y responde con `auth.fresh_authentication_required` cuando corresponde.
+40. El inventory ya expone hints de accion (`can_revoke`, `requires_reauthentication`) y metadata de device reducida (`client_platform`, `device_kind`) apta para UI de security center.
+41. Los repositorios de session ya soportan retencion minima y purga explicita de tombstones de recovery.
+42. El framework ya expone el comando `auth:sessions:cleanup` para cleanup operativo de sesiones expiradas y tombstones vencidos.
+43. El inventory ya expone `device_reference` pseudonimizado, `device_trust_state` y policy de revocacion mas expresiva (`revocation_scope`, `revocation_mode`) sin promocionar fingerprint derivado a trusted-device real.
+44. El subsistema ya soporta trusted-device records persistentes, alta del dispositivo actual con MFA y olvido/revocacion de trusted devices propios.
 
 ### Ya preparado de forma adyacente
 
@@ -822,7 +874,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida real de session, rotacion/replay hardening de trusted-device credentials, policy/authorization multi-actor y background cleanup mas completo.
+3. coordinacion distribuida real de session, policy/authorization multi-actor y background cleanup mas completo.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.

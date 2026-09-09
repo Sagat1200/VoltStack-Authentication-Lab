@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Session Coordination Distribuida + Trusted-Device Credential Rotation/Replay Hardening + Policy/Authorization Multi-Actor + Alineacion Con Controllers Security`
+`Session Coordination Distribuida + Policy/Authorization Multi-Actor + Security Center Distribuido + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -354,7 +354,7 @@ Documentos objetivo:
 1. coordinacion de session realmente compartida y no solo oportunista.
 2. metadata de inventario por identidad o dispositivo sin exponer secretos bearer.
 3. ownership/policy para revocacion administrativa de sesiones.
-4. trusted-device credentials cliente con rotacion, revocacion rica y replay hardening.
+4. management distribuido y authorization mas rica para sessions y trusted devices, incluyendo revocacion administrativa y posture de dispositivo.
 5. limpieza y retencion gobernada de tombstones de recovery.
 6. tooling operativo minimo para cleanup/retention del estado derivado.
 7. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
