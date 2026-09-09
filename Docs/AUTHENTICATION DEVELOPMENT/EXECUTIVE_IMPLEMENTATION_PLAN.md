@@ -67,8 +67,11 @@ Hoy ya existe una base minima ampliada:
 - facade `Auth`
 - `config/auth.php`
 - `AuthenticationServiceProvider`
+- `AuthenticationSessionRecoveryReason`
+- `AuthenticationSessionPublicId`
 - middleware alias `auth`
 - middleware alias `guest`
+- middleware alias `mfa`
 - `IdentitySecurityState`
 - excepciones propias de Authentication
 - `attemptOrFail()`
@@ -76,6 +79,9 @@ Hoy ya existe una base minima ampliada:
 - `PasswordPolicy`
 - upgrade persistente inicial de hash usando `storage_path`
 - purga, rotacion y revocacion basica de session
+- tombstones minimos de recovery para sesiones revocadas/expiradas
+- inventory seguro por `session_public_id`
+- denial explicito `auth.revoked_session`
 - pruebas unitarias y feature del lenguaje base y del request scope
 - pruebas del flujo minimo de password authentication
 - pruebas del flujo minimo de session authentication
@@ -566,24 +572,26 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-017
+### DV-AUTH-019
 
 Alcance sugerido:
 
-- coordinacion de sesiones mas robusta
-- recovery distribuido y seguridad contextual
+- coordinacion de sesiones realmente compartida
+- metadata rica de inventario y activity tracking
+- limpieza/retencion gobernada de tombstones
 
 Entregables minimos:
 
 1. stores de session mas robustos o distribuidos.
-2. recovery coordinado y denials adicionales alrededor de session stale/revocada.
-3. taxonomy mas rica de fallos y denials.
-4. alineacion con Controllers Security y `AuthenticationContext`.
-5. pruebas de integracion y hardening adicionales.
-6. evolucion del provider local hacia fuentes persistentes mas ricas.
+2. metadata de sesiones por identidad/dispositivo.
+3. revocacion administrativa y coordinacion multi-nodo mas fuerte.
+4. limpieza/retencion de tombstones y recovery coordinado.
+5. alineacion con Controllers Security y `AuthenticationContext`.
+6. pruebas de integracion y hardening adicionales.
+7. evolucion del provider local hacia fuentes persistentes mas ricas.
 
 Resultado esperado:
 
-- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime y entry points,
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery y entry points,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.

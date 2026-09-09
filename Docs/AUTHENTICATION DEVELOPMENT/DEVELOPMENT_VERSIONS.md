@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-08`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth minima endurecida, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local y step-up operativo persistido en AuthenticationContext`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida + denials de recovery/elevation mas ricos + alineacion con Controllers Security`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida real + retencion/cleanup de tombstones + inventario/device metadata mas rica`
 
 ## Versionado de desarrollo
 
@@ -479,6 +479,73 @@ Sirve como control operativo de:
   - falta alinear mejor Auth con stores distribuidos y revocacion multi-nodo,
   - y el subsistema aun no cubre bearer auth real ni MFA basada en TOTP/WebAuthn.
 
+### DV-AUTH-017
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `22`, `25`, `30`, `37`, `49`, `50`
+- Alcance objetivo:
+  - distinguir mejor los fallos de recovery de session entre expiracion, ausencia y revocacion activa,
+  - persistir marcadores minimos de recovery en los repositorios `memory/file`,
+  - y exponer un denial propio `auth.revoked_session` en los entry points HTTP del framework.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/AuthenticationSessionRecoveryReason.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationSessionRepositoryInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/InMemoryAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/FileAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/SessionAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/RevokedAuthenticationSessionException.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/AuthExceptionMapper.php`
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/AuthMiddleware.php`
+  - `vendor/voltstack/framework/src/Quantum/Middlewares/MfaMiddleware.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/FileAuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/QuantumExceptionHandlerTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - los repositorios de session ya conservan una razon minima de recovery cuando una credencial expira o se revoca,
+  - `SessionAuthenticator` ya distingue `session_revoked` de `session_expired` y `session_not_found`,
+  - `AuthManager` propaga esa razon al runtime activo para que los middlewares respondan sin reconsultas adicionales,
+  - y las rutas `auth`/`mfa` ahora pueden responder `401 auth.revoked_session` sin `WWW-Authenticate` cuando el cliente presenta una session invalidada activamente.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo oportunista y limitada al store compartido disponible,
+  - faltan APIs de inventario y revocacion administrativa de sesiones por usuario/dispositivo,
+  - falta limpieza/retencion gobernada de tombstones en despliegues de larga vida,
+  - y el subsistema aun no cubre stores distribuidos reales, bearer auth ni MFA basada en TOTP/WebAuthn.
+
+### DV-AUTH-018
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `22`, `35`, `47`, `49`, `50`
+- Alcance objetivo:
+  - introducir un inventario minimo de sesiones propias sin exponer el bearer `session_id`,
+  - emitir un `session_public_id` seguro para operaciones de management,
+  - y soportar revocacion dirigida de una sesion especifica o de todas las demas sesiones del principal actual.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/AuthenticationSessionPublicId.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/AuthenticationSessionSummary.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/AuthenticationSession.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Context/AuthenticationContext.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationSessionRepositoryInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/InMemoryAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/FileAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationManagerInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/FileAuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - cada nueva sesion emitida por Auth ya incorpora un `session_public_id` con prefijo `sess_pub_...`,
+  - `AuthenticationContext` ya puede exponer una referencia segura de sesion actual distinta del secreto bearer,
+  - `AuthManager` ya ofrece inventario de sesiones propias, `currentSession()`, `sessions()`, `revokeSession()` y `revokeOtherSessions()`,
+  - y la suite feature valida que el inventario no devuelve los `session_id` reales y que una revocacion dirigida invalida correctamente la credencial antigua.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado aunque el modelo ya soporta inventory seguro,
+  - faltan metadata de dispositivo, ultima actividad y location approximation para una UI de security center,
+  - falta retencion/cleanup gobernada de tombstones e inventario derivado en despliegues de larga vida,
+  - y el subsistema aun no cubre stores distribuidos reales, bearer auth ni MFA basada en TOTP/WebAuthn.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -520,6 +587,9 @@ Sirve como control operativo de:
 28. Alias `mfa` como entry point explicito del framework para rutas que requieren elevation.
 29. Denial `auth.step_up_required` coherente, sin `WWW-Authenticate`, con headers propios para el cliente.
 30. Metadata fluida `Route::mfa()` para expresar step-up junto a `middleware('auth')`.
+31. Recovery de session con razones explicitas persistidas (`revoked`/`expired`) y denial `auth.revoked_session` para invalidacion activa.
+32. Cada sesion emitida posee `session_public_id` seguro para inventory/revocacion sin exponer el bearer secret.
+33. `AuthManager` ya permite listar sesiones propias, identificar la actual y revocar una sesion concreta o las demas sesiones del principal.
 
 ### Ya preparado de forma adyacente
 
@@ -542,7 +612,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida de session y denials de recovery/elevation mas ricos.
+3. coordinacion distribuida real de session, metadata rica de inventory y revocacion administrativa multi-nodo.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.
@@ -555,7 +625,7 @@ Sirve como control operativo de:
 
 ### Opcion recomendada inmediata
 
-Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
+Consolidar el flujo ya operativo y cerrar los faltantes del nucleo distribuido y del security center:
 
 - `25_AUTHENTICATION_FAILURE_ERROR_EXCEPTION_DENIAL_AND_SECURITY_RESPONSE_HANDLING_SYSTEM.md`
 - `12_SESSION_AUTHENTICATION_PERSISTENCE_CONTEXT_RESTORATION_AND_SESSION_LIFECYCLE_SYSTEM.md`
@@ -563,20 +633,24 @@ Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
 - `37_AUTHENTICATION_ASSURANCE_LEVEL_AUTHENTICATION_CONTEXT_AND_TRUST_CLASSIFICATION_SYSTEM.md`
 - `49_AUTHENTICATION_REFERENCE_IMPLEMENTATION_DEFAULT_COMPONENTS_SECURE_DEFAULTS_AND_FRAMEWORK_INTEGRATION_SYSTEM.md`
 - `30_AUTHENTICATION_DISTRIBUTED_SYSTEM_CLUSTER_SESSION_COORDINATION_REVOCATION_CONSISTENCY_AND_MULTI_NODE_RUNTIME.md`
+- `35_AUTHENTICATION_SESSION_DEVICE_CREDENTIAL_INVENTORY_SECURITY_CENTER_AND_USER_SECURITY_MANAGEMENT.md`
+- `42_AUTHENTICATION_PRIVACY_DATA_MINIMIZATION_RETENTION_CONSENT_AND_SECURITY_METADATA_GOVERNANCE_SYSTEM.md`
 
 ### Motivo
 
-- ya existe autenticacion real minima por password y session con resolver, facade, policy y errores propios,
-- el valor inmediato ahora esta en endurecer la coordinacion de session, enriquecer denials de recovery/elevation y alinear Authentication con la capa adyacente de Security,
+- ya existe autenticacion real minima por password y session con resolver, facade, policy, tombstones de recovery, inventory seguro y errores propios,
+- el valor inmediato ahora esta en pasar del inventory basico local a coordinacion, metadata y retencion mas gobernadas,
 - y abrir MFA, federation o passkeys antes de cerrar eso produciria sobrearquitectura sin cierre operativo.
 
 ## Entregables minimos sugeridos para ese siguiente ciclo
 
-1. revocacion distribuida o store mas robusto para session.
-2. denials y recovery coordinado para session stale/revocada en escenarios mas distribuidos.
-3. entry points complementarios adicionales sobre `auth/guest`.
-4. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
-5. API publica minima:
+1. store de session mas robusto o compartido con retencion y limpieza de tombstones.
+2. metadata de inventory por identidad o dispositivo.
+3. revocacion administrativa mas rica por public identifier y ownership/policy.
+4. denials y recovery coordinado para session stale/revocada en escenarios mas distribuidos.
+5. entry points complementarios adicionales sobre `auth/guest`.
+6. alineacion de `AuthenticationContext` con el stack adyacente de Controllers Security.
+7. API publica minima:
    - `Auth::check()`
    - `Auth::guest()`
    - `Auth::user()`
@@ -584,8 +658,9 @@ Consolidar el flujo ya operativo y cerrar los faltantes del nucleo:
    - `Auth::attempt()`
    - `Auth::login()`
    - `Auth::logout()`
-6. pruebas unitarias y feature del flujo:
+8. pruebas unitarias y feature del flujo:
    - revocacion distribuida o store robusto,
+   - inventario, public identifiers y tombstones,
    - middleware complementario y denials diferenciados,
    - recovery correcto,
    - fallo autenticado con respuesta coherente,
