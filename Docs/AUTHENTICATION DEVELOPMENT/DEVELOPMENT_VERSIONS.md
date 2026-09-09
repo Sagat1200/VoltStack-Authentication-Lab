@@ -13,9 +13,9 @@ Sirve como control operativo de:
 
 ## Corte actual
 
-- Fecha de actualizacion: `2026-09-08`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, fresh-auth configurable para revocacion remota, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida real + retencion/cleanup de tombstones + tooling de cleanup + policy/authorization mas expresiva`
+- Fecha de actualizacion: `2026-09-09`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, fresh-auth configurable para revocacion remota, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida real + policy/authorization mas expresiva + tooling operativo mas rico + trusted devices`
 
 ## Versionado de desarrollo
 
@@ -628,6 +628,36 @@ Sirve como control operativo de:
   - faltan trusted devices, metadata de device mas estable y tooling de cleanup,
   - y falta retencion/cleanup gobernada de tombstones y metadata derivada en despliegues de larga vida.
 
+### DV-AUTH-022
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `42`, `44`, `48`, `49`
+- Alcance objetivo:
+  - introducir retencion minima configurable para tombstones de recovery,
+  - exponer un comando operativo basico para cleanup de sesiones y tombstones,
+  - y evitar crecimiento sin limite del estado derivado del session store.
+- Evidencia principal:
+  - `config/auth.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationSessionRepositoryInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/InMemoryAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/FileAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthenticationServiceProvider.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSessionsCleanupCommand.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/ConsoleApplication.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/FileAuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSessionsCleanupCommandTest.php`
+- Resultado:
+  - el contrato de repositorio de sesiones ya soporta purga explicita de tombstones mediante `purgeRecoveryReasons()`,
+  - los stores `memory` y `file` ya respetan una ventana de retencion configurable para recovery tombstones,
+  - el framework ya expone `auth:sessions:cleanup` para purgar sesiones expiradas y tombstones vencidos bajo demanda,
+  - y la suite unitaria valida tanto la retencion como la ejecucion real del comando sobre un file store bootstrapped.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado aunque el cleanup ya sea operativo,
+  - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
+  - faltan trusted devices y metadata de device mas estable,
+  - y falta un scheduler/background processing mas completo para cleanup continuo y reconciliation multi-store.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -675,6 +705,8 @@ Sirve como control operativo de:
 34. El inventory de sesiones ya expone metadata reducida (`client_family`, `ip_prefix`, `label`, `last_activity_at`) sin almacenar ni devolver `User-Agent` o IP crudos.
 35. La revocacion remota de sesiones ya exige fresh authentication configurable y responde con `auth.fresh_authentication_required` cuando corresponde.
 36. El inventory ya expone hints de accion (`can_revoke`, `requires_reauthentication`) y metadata de device reducida (`client_platform`, `device_kind`) apta para UI de security center.
+37. Los repositorios de session ya soportan retencion minima y purga explicita de tombstones de recovery.
+38. El framework ya expone el comando `auth:sessions:cleanup` para cleanup operativo de sesiones expiradas y tombstones vencidos.
 
 ### Ya preparado de forma adyacente
 
@@ -697,7 +729,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida real de session, policy/authorization mas rica de revocacion, trusted devices y tooling de cleanup.
+3. coordinacion distribuida real de session, policy/authorization mas rica de revocacion, trusted devices y background cleanup mas completo.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.
