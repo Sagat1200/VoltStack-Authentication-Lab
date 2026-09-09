@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-09`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida real + trusted-device credentials duraderas + policy/authorization multi-actor + tooling operativo mas rico`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida real + rotacion/replay-hardening de trusted-device credentials + policy/authorization multi-actor + tooling operativo mas rico`
 
 ## Versionado de desarrollo
 
@@ -715,6 +715,38 @@ Sirve como control operativo de:
   - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
   - y falta un scheduler/background processing mas completo para cleanup continuo y reconciliation multi-store.
 
+### DV-AUTH-025
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `11`, `21`, `22`, `35`, `42`, `47`, `49`
+- Alcance objetivo:
+  - convertir el trusted-device record server-side en una credencial cliente duradera validable en runtime,
+  - usar esa credencial para reducir el challenge MFA obligatorio cuando el dispositivo reconocido coincide con identidad y `device_reference`,
+  - y mantener la separacion entre reconocimiento de dispositivo, sesion autenticada y nivel de assurance.
+- Evidencia principal:
+  - `config/auth.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Authenticators/PasswordAuthenticator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthenticationServiceProvider.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Context/AuthenticationContext.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Runtime/AuthenticationResponseDecorator.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Support/AuthenticationHttpState.php`
+  - `vendor/voltstack/framework/src/Quantum/Http/Response.php`
+  - `vendor/voltstack/framework/src/Quantum/Transport/Emitters/HttpSapiEmitter.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+- Resultado:
+  - el trusted-device cookie ahora usa una credencial cliente `publicId.secret` con `credential_hash` persistido server-side y validacion runtime contra identidad y `device_reference`,
+  - `PasswordAuthenticator` ya puede reducir el challenge de `second_factor_required` cuando el dispositivo reconocido sigue siendo el mismo, sin elevar por ello la sesion a `MultiFactor`,
+  - `AuthenticationContext` y el inventory de sesion ya exponen `trusted_device_credential_present` y `trusted_device_public_id` cuando la credencial fue validada,
+  - `Response` y el emitter HTTP ya soportan multiples `Set-Cookie`, permitiendo emitir en el mismo response la session cookie y la trusted-device cookie,
+  - y las pruebas feature cubren emision simultanea de cookies, challenge reduction en el mismo dispositivo y rechazo con limpieza de cookie cuando la credencial se reutiliza desde otro fingerprint.
+- Gap natural posterior:
+  - la coordinacion de sesiones y trusted-device state sigue siendo local al store configurado,
+  - faltan rotacion automatica, replay hardening y revocacion mas rica de trusted-device credentials,
+  - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
+  - y falta un scheduler/background processing mas completo para cleanup continuo, reconciliation multi-store y mantenimiento del posture de device.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -748,6 +780,8 @@ Sirve como control operativo de:
 20. Denial `authentication_strength_insufficient` reutilizando el contrato de Controllers Security.
 21. Metadata de ruta `auth.minimum_strength` respetada por el middleware `auth`.
 22. `AuthenticationContext` expone `authenticationStrength()` y `authenticationAssuranceProfile()`.
+23. Trusted-device credential cliente duradera validada en runtime y usada para challenge reduction sin colapsar la semantica de assurance.
+24. Soporte HTTP para multiples `Set-Cookie` en el mismo response de Authentication.
 23. Login, session restore y `setUser()` conservan `authentication_strength` y `authentication_assurance_profile`.
 24. `LocalIdentityProvider` soporta segundo factor configurable para elevar assurance a `MultiFactor`.
 25. Password + `second_factor` conserva `amr` y assurance MFA al restaurar la session.
@@ -788,7 +822,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida real de session, trusted-device credentials cliente duraderas, policy/authorization multi-actor y background cleanup mas completo.
+3. coordinacion distribuida real de session, rotacion/replay hardening de trusted-device credentials, policy/authorization multi-actor y background cleanup mas completo.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.

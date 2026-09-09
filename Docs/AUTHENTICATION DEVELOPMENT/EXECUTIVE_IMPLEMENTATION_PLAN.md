@@ -713,3 +713,26 @@ Resultado esperado:
 - el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy, cleanup, trusted-device posture y challenge reduction,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-026
+
+Alcance sugerido:
+
+- coordinacion de sesiones realmente compartida
+- rotacion y replay hardening de trusted-device credentials cliente
+- policy/authorization multi-actor para revocacion administrativa
+
+Entregables minimos:
+
+1. stores de session mas robustos o distribuidos.
+2. rotacion, invalidacion rica y replay hardening de trusted-device credentials.
+3. policy/authorization mas rica para revocacion administrativa y multi-actor.
+4. alineacion con Controllers Security y `AuthenticationContext`.
+5. pruebas de integracion y hardening adicionales.
+6. evolucion del provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva challenge reduction para dispositivos reconocidos, pero endurece rotacion, replay protection y revocacion de la credencial cliente,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
