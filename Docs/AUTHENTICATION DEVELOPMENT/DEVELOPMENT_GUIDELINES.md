@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Session Coordination Distribuida + Metadata De Inventory + Retencion De Tombstones + Alineacion Con Controllers Security`
+`Session Coordination Distribuida + Metadata De Device + Policy/Authorization De Revocacion + Retencion De Tombstones + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -353,9 +353,9 @@ Documentos objetivo:
 
 1. coordinacion de session realmente compartida y no solo oportunista.
 2. metadata de inventario por identidad o dispositivo sin exponer secretos bearer.
-3. limpieza y retencion gobernada de tombstones de recovery.
-4. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `step_up` y assurance insufficiente.
-5. ownership/policy para revocacion administrativa de sesiones.
+3. ownership/policy para revocacion administrativa de sesiones.
+4. limpieza y retencion gobernada de tombstones de recovery.
+5. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
 6. alineacion de `AuthenticationContext` con Controllers Security.
 7. suite de pruebas de integracion del flujo endurecido.
 8. base para stores persistentes adicionales del provider local o providers mutables mas ricos.

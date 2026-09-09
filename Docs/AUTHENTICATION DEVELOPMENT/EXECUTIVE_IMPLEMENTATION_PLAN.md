@@ -69,6 +69,7 @@ Hoy ya existe una base minima ampliada:
 - `AuthenticationServiceProvider`
 - `AuthenticationSessionRecoveryReason`
 - `AuthenticationSessionPublicId`
+- `touch()` de session para refresh de metadata
 - middleware alias `auth`
 - middleware alias `guest`
 - middleware alias `mfa`
@@ -81,6 +82,7 @@ Hoy ya existe una base minima ampliada:
 - purga, rotacion y revocacion basica de session
 - tombstones minimos de recovery para sesiones revocadas/expiradas
 - inventory seguro por `session_public_id`
+- metadata reducida de inventory y refresh server-side de `last_activity`
 - denial explicito `auth.revoked_session`
 - pruebas unitarias y feature del lenguaje base y del request scope
 - pruebas del flujo minimo de password authentication
@@ -572,18 +574,18 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-019
+### DV-AUTH-020
 
 Alcance sugerido:
 
 - coordinacion de sesiones realmente compartida
-- metadata rica de inventario y activity tracking
+- ownership/policy de revocacion y fresh-auth para operaciones sensibles
 - limpieza/retencion gobernada de tombstones
 
 Entregables minimos:
 
 1. stores de session mas robustos o distribuidos.
-2. metadata de sesiones por identidad/dispositivo.
+2. ownership/policy de sesiones por identidad/dispositivo.
 3. revocacion administrativa y coordinacion multi-nodo mas fuerte.
 4. limpieza/retencion de tombstones y recovery coordinado.
 5. alineacion con Controllers Security y `AuthenticationContext`.
@@ -593,5 +595,29 @@ Entregables minimos:
 Resultado esperado:
 
 - el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery y entry points,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-021
+
+Alcance sugerido:
+
+- coordinacion de sesiones realmente compartida
+- metadata de device mas rica y policy/authorization mas expresiva
+- limpieza/retencion gobernada de tombstones
+
+Entregables minimos:
+
+1. stores de session mas robustos o distribuidos.
+2. metadata de device y actividad mas util para security center.
+3. policy/authorization mas rica para revocacion administrativa.
+4. limpieza/retencion de tombstones y recovery coordinado.
+5. alineacion con Controllers Security y `AuthenticationContext`.
+6. pruebas de integracion y hardening adicionales.
+7. evolucion del provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy y entry points,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.

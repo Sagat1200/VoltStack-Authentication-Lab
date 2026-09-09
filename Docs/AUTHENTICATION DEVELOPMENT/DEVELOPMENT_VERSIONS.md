@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-08`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida real + retencion/cleanup de tombstones + inventario/device metadata mas rica`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion reducida, refresh server-side de last_activity, fresh-auth configurable para revocacion remota, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida real + retencion/cleanup de tombstones + metadata de device mas rica + policy/authorization mas expresiva`
 
 ## Versionado de desarrollo
 
@@ -546,6 +546,62 @@ Sirve como control operativo de:
   - falta retencion/cleanup gobernada de tombstones e inventario derivado en despliegues de larga vida,
   - y el subsistema aun no cubre stores distribuidos reales, bearer auth ni MFA basada en TOTP/WebAuthn.
 
+### DV-AUTH-019
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `35`, `42`, `47`, `49`, `50`
+- Alcance objetivo:
+  - enriquecer el inventario de sesiones con metadata reducida y segura,
+  - refrescar `last_activity` server-side en cada recovery exitoso,
+  - y evitar el almacenamiento/exposicion de `User-Agent` o IP crudos dentro del inventory visible.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationSessionRepositoryInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/AuthenticationSessionSummary.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/InMemoryAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/FileAuthenticationSessionRepository.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/FileAuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - el inventory de sesiones ya expone `label`, `client_family`, `ip_prefix` y `last_activity_at`,
+  - `AuthManager` ahora reduce `User-Agent` a una familia de cliente e IP a un prefijo seguro antes de persistir metadata,
+  - el recovery de una sesion valida actualiza `last_activity_at` server-side mediante `touch()` en el repositorio,
+  - y la suite feature valida que el inventory no devuelve ni `User-Agent` ni IP crudos del request.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado aunque el inventory ya sea util,
+  - faltan ownership/policy y fresh-auth para revocacion administrativa sensible,
+  - falta metadata de dispositivo y ultima actividad mas rica para un security center completo,
+  - y falta retencion/cleanup gobernada de tombstones y metadata derivada en despliegues de larga vida.
+
+### DV-AUTH-020
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `22`, `25`, `32`, `35`, `47`, `49`
+- Alcance objetivo:
+  - exigir fresh authentication para revocacion remota de sesiones,
+  - conservar la revocacion de la sesion actual como autocierre permitido,
+  - y dejar la semantica HTTP explicita para `auth.fresh_authentication_required`.
+- Evidencia principal:
+  - `config/auth.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Context/AuthenticationContext.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/FreshAuthenticationRequiredException.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Exceptions/AuthExceptionMapper.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+  - `vendor/voltstack/framework/tests/Unit/QuantumExceptionHandlerTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `AuthManager` ya sella `authentication_fresh_at` al emitir una nueva sesion,
+  - la revocacion remota (`revokeSession()` sobre otra sesion y `revokeOtherSessions()`) exige autenticacion fresca configurable,
+  - la revocacion de la sesion actual continua disponible aun cuando la freshness window expiro,
+  - y el mapper HTTP ya responde `403 auth.fresh_authentication_required` con headers de reauth sin `WWW-Authenticate`.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado aunque la policy de revocacion ya sea mas segura,
+  - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
+  - falta metadata de device mas rica para un security center completo,
+  - y falta retencion/cleanup gobernada de tombstones y metadata derivada en despliegues de larga vida.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -590,6 +646,8 @@ Sirve como control operativo de:
 31. Recovery de session con razones explicitas persistidas (`revoked`/`expired`) y denial `auth.revoked_session` para invalidacion activa.
 32. Cada sesion emitida posee `session_public_id` seguro para inventory/revocacion sin exponer el bearer secret.
 33. `AuthManager` ya permite listar sesiones propias, identificar la actual y revocar una sesion concreta o las demas sesiones del principal.
+34. El inventory de sesiones ya expone metadata reducida (`client_family`, `ip_prefix`, `label`, `last_activity_at`) sin almacenar ni devolver `User-Agent` o IP crudos.
+35. La revocacion remota de sesiones ya exige fresh authentication configurable y responde con `auth.fresh_authentication_required` cuando corresponde.
 
 ### Ya preparado de forma adyacente
 
@@ -612,7 +670,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida real de session, metadata rica de inventory y revocacion administrativa multi-nodo.
+3. coordinacion distribuida real de session, policy/authorization mas rica de revocacion y metadata de inventory aun mas rica.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.
