@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-08`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion reducida, refresh server-side de last_activity, fresh-auth configurable para revocacion remota, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida real + retencion/cleanup de tombstones + metadata de device mas rica + policy/authorization mas expresiva`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, fresh-auth configurable para revocacion remota, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `session coordination distribuida real + retencion/cleanup de tombstones + tooling de cleanup + policy/authorization mas expresiva`
 
 ## Versionado de desarrollo
 
@@ -602,6 +602,32 @@ Sirve como control operativo de:
   - falta metadata de device mas rica para un security center completo,
   - y falta retencion/cleanup gobernada de tombstones y metadata derivada en despliegues de larga vida.
 
+### DV-AUTH-021
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `22`, `35`, `42`, `47`, `49`
+- Alcance objetivo:
+  - enriquecer el inventory con metadata de device mas util y no sensible,
+  - exponer hints de accion para revocacion por sesion,
+  - y reflejar en el inventory si la revocacion remota exigira reautenticacion del actor actual.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Sessions/AuthenticationSessionSummary.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthenticationSessionRepositoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/FileAuthenticationSessionRepositoryTest.php`
+- Resultado:
+  - el inventory de sesiones ya expone `client_platform`, `device_kind`, `can_revoke` y `requires_reauthentication`,
+  - el label visible de sesion ya puede expresarse como metadata no confiable estilo `Chrome on Windows`,
+  - `requires_reauthentication` se calcula segun la frescura de la sesion actual del actor y no segun la sesion remota listada,
+  - y las pruebas feature validan hints correctos para sesiones desktop/mobile y para revocacion remota con freshness vencida.
+- Gap natural posterior:
+  - la coordinacion de sesiones sigue siendo local al store configurado aunque el inventory ya sea mas expresivo,
+  - falta authorization/policy mas rica para escenarios administrativos y multi-actor,
+  - faltan trusted devices, metadata de device mas estable y tooling de cleanup,
+  - y falta retencion/cleanup gobernada de tombstones y metadata derivada en despliegues de larga vida.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -648,6 +674,7 @@ Sirve como control operativo de:
 33. `AuthManager` ya permite listar sesiones propias, identificar la actual y revocar una sesion concreta o las demas sesiones del principal.
 34. El inventory de sesiones ya expone metadata reducida (`client_family`, `ip_prefix`, `label`, `last_activity_at`) sin almacenar ni devolver `User-Agent` o IP crudos.
 35. La revocacion remota de sesiones ya exige fresh authentication configurable y responde con `auth.fresh_authentication_required` cuando corresponde.
+36. El inventory ya expone hints de accion (`can_revoke`, `requires_reauthentication`) y metadata de device reducida (`client_platform`, `device_kind`) apta para UI de security center.
 
 ### Ya preparado de forma adyacente
 
@@ -670,7 +697,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida real de session, policy/authorization mas rica de revocacion y metadata de inventory aun mas rica.
+3. coordinacion distribuida real de session, policy/authorization mas rica de revocacion, trusted devices y tooling de cleanup.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.

@@ -621,3 +621,26 @@ Resultado esperado:
 - el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy y entry points,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-022
+
+Alcance sugerido:
+
+- coordinacion de sesiones realmente compartida
+- tooling/cleanup de tombstones y retention minima operativa
+- policy/authorization mas expresiva para revocacion administrativa
+
+Entregables minimos:
+
+1. stores de session mas robustos o distribuidos.
+2. cleanup/retention minima de tombstones y metadata derivada.
+3. policy/authorization mas rica para revocacion administrativa.
+4. alineacion con Controllers Security y `AuthenticationContext`.
+5. pruebas de integracion y hardening adicionales.
+6. evolucion del provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy, cleanup y entry points,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
