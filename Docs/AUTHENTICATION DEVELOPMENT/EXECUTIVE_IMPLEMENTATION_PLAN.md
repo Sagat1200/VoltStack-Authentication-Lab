@@ -574,27 +574,27 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-028
+### DV-AUTH-029
 
 Alcance sugerido:
 
-- coordinacion de sesiones realmente compartida
+- mutaciones distribuidas mas fuertes sobre sessions y trusted devices
 - policy/authorization multi-actor para revocacion administrativa
-- security center distribuido para sessions y trusted devices
+- tooling operativo del security center distribuido
 
 Entregables minimos:
 
 1. stores de session mas robustos o distribuidos.
 2. ownership/policy de sesiones y trusted devices por identidad/dispositivo.
 3. revocacion administrativa y coordinacion multi-nodo mas fuerte.
-4. inventory/security center distribuido y mas expresivo para sessions y trusted devices.
+4. operaciones por dispositivo agregado sobre el inventory/security center distribuido.
 5. alineacion con Controllers Security y `AuthenticationContext`.
 6. pruebas de integracion y hardening adicionales.
 7. evolucion del provider local hacia fuentes persistentes mas ricas.
 
 Resultado esperado:
 
-- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy y management de dispositivos,
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy, mutaciones distribuidas y management de dispositivos,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 

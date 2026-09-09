@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Session Coordination Distribuida + Policy/Authorization Multi-Actor + Security Center Distribuido + Alineacion Con Controllers Security`
+`Mutaciones Distribuidas Mas Fuertes + Policy/Authorization Multi-Actor + Tooling Del Security Center + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -351,13 +351,12 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. coordinacion de session realmente compartida y no solo oportunista.
-2. metadata de inventario por identidad o dispositivo sin exponer secretos bearer.
-3. ownership/policy para revocacion administrativa de sesiones.
-4. management distribuido y authorization mas rica para sessions y trusted devices, incluyendo revocacion administrativa y posture de dispositivo.
+1. mutaciones distribuidas mas fuertes sobre sessions y trusted devices, apoyadas en store compartido.
+2. inventory agregado por dispositivo sin exponer secretos bearer.
+3. ownership/policy para revocacion administrativa de sesiones y posture de device.
+4. tooling operativo mas expresivo para el security center y el management distribuido.
 5. limpieza y retencion gobernada de tombstones de recovery.
-6. tooling operativo minimo para cleanup/retention del estado derivado.
-7. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
-8. alineacion de `AuthenticationContext` con Controllers Security.
-9. suite de pruebas de integracion del flujo endurecido.
-10. base para stores persistentes adicionales del provider local o providers mutables mas ricos.
+6. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
+7. alineacion de `AuthenticationContext` con Controllers Security.
+8. suite de pruebas de integracion del flujo endurecido.
+9. base para stores persistentes adicionales del provider local o providers mutables mas ricos.

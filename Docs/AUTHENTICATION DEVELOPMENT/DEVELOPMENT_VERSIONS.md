@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-09`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints `can_forget/requires_reauthentication/revocation_scope/revocation_mode`, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `session coordination distribuida real + policy/authorization multi-actor mas amplia + security center distribuido para sessions y trusted devices`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints `can_forget/requires_reauthentication/revocation_scope/revocation_mode`, inventory agregado `devices()` por `device_reference` combinando sessions y trusted devices, lectura del security center sobre file stores compartidos entre instancias, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `mutaciones distribuidas mas fuertes sobre sessions y trusted devices + policy/authorization multi-actor mas amplia + tooling operativo del security center`
 
 ## Versionado de desarrollo
 
@@ -797,6 +797,30 @@ Sirve como control operativo de:
   - falta security center distribuido y revocacion administrativa mas amplia sobre sessions y trusted devices,
   - y falta un scheduler/background processing mas completo para cleanup continuo, reconciliation multi-store y mantenimiento del posture de device.
 
+### DV-AUTH-028
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `12`, `22`, `26`, `30`, `35`, `47`, `49`
+- Alcance objetivo:
+  - introducir una vista agregada del security center por `device_reference` en vez de solo inventories separados de sessions y trusted devices,
+  - demostrar que esa vista puede leerse de forma consistente sobre un store compartido entre multiples instancias,
+  - y dejar una API publica mas ergonomica para management distribuido posterior.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationManagerInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Devices/DeviceInventorySummary.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `AuthManager` ahora expone `devices()` como inventory agregado por `device_reference`, combinando `sessions()` y `trustedDevices()` dentro de una sola vista de security center,
+  - cada entrada resume `session_count`, `current_session_count`, `session_public_ids`, presencia de trusted device, `trusted_device_public_id`, metadata reducida de plataforma y hints de management distribuidos,
+  - la suite feature valida tanto el agregado local en memoria como la lectura consistente del mismo inventory sobre `file` stores compartidos entre dos aplicaciones distintas,
+  - y el subsistema ya ofrece una base mas coherente para futuros flujos de revocacion administrativa y posture distribuido sin exponer secretos bearer.
+- Gap natural posterior:
+  - la coordinacion distribuida sigue siendo principalmente de lectura y apoyada en el store compartido configurado,
+  - faltan mutaciones mas ricas por dispositivo agregado, revocacion administrativa multi-actor y governance de ownership,
+  - falta tooling operativo mas expresivo para el security center y reconciliacion multi-store,
+  - y falta un scheduler/background processing mas completo para cleanup continuo y mantenimiento del posture de device.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -852,6 +876,8 @@ Sirve como control operativo de:
 42. El framework ya expone el comando `auth:sessions:cleanup` para cleanup operativo de sesiones expiradas y tombstones vencidos.
 43. El inventory ya expone `device_reference` pseudonimizado, `device_trust_state` y policy de revocacion mas expresiva (`revocation_scope`, `revocation_mode`) sin promocionar fingerprint derivado a trusted-device real.
 44. El subsistema ya soporta trusted-device records persistentes, alta del dispositivo actual con MFA y olvido/revocacion de trusted devices propios.
+45. `AuthManager::devices()` ya entrega un inventory agregado por `device_reference` que combina sessions y trusted devices en una sola vista de security center.
+46. El inventory agregado ya funciona sobre `file` stores compartidos entre instancias distintas y expone hints de management sin exponer secretos bearer.
 
 ### Ya preparado de forma adyacente
 
@@ -874,7 +900,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. coordinacion distribuida real de session, policy/authorization multi-actor y background cleanup mas completo.
+3. mutaciones distribuidas mas fuertes sobre sessions y trusted devices, policy/authorization multi-actor y background cleanup mas completo.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.
