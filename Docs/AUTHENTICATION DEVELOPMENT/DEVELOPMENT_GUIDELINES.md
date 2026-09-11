@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Mutaciones Distribuidas Mas Fuertes + Policy/Authorization Multi-Actor + Tooling Del Security Center + Alineacion Con Controllers Security`
+`Policy/Authorization Multi-Actor Administrativa + Tooling Del Security Center + Reconciliacion Background + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -351,10 +351,10 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. mutaciones distribuidas mas fuertes sobre sessions y trusted devices, apoyadas en store compartido.
-2. inventory agregado por dispositivo sin exponer secretos bearer.
-3. ownership/policy para revocacion administrativa de sesiones y posture de device.
-4. tooling operativo mas expresivo para el security center y el management distribuido.
+1. policy/authorization administrativa multi-actor sobre sessions y devices agregadas.
+2. tooling operativo mas expresivo para el security center y el management distribuido.
+3. reconciliacion/background processing del estado derivado sobre stores compartidos.
+4. inventory agregado por dispositivo sin exponer secretos bearer.
 5. limpieza y retencion gobernada de tombstones de recovery.
 6. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
 7. alineacion de `AuthenticationContext` con Controllers Security.

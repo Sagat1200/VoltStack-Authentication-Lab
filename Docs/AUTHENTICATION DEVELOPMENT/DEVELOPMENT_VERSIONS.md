@@ -13,9 +13,9 @@ Sirve como control operativo de:
 
 ## Corte actual
 
-- Fecha de actualizacion: `2026-09-09`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints `can_forget/requires_reauthentication/revocation_scope/revocation_mode`, inventory agregado `devices()` por `device_reference` combinando sessions y trusted devices, lectura del security center sobre file stores compartidos entre instancias, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `mutaciones distribuidas mas fuertes sobre sessions y trusted devices + policy/authorization multi-actor mas amplia + tooling operativo del security center`
+- Fecha de actualizacion: `2026-09-11`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints `can_forget/requires_reauthentication/revocation_scope/revocation_mode`, inventory agregado `devices()` por `device_reference` combinando sessions y trusted devices, revocacion coordinada `revokeDevice()` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando auth:sessions:cleanup, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + tooling operativo del security center + reconciliacion/background processing mas rico`
 
 ## Versionado de desarrollo
 
@@ -821,6 +821,29 @@ Sirve como control operativo de:
   - falta tooling operativo mas expresivo para el security center y reconciliacion multi-store,
   - y falta un scheduler/background processing mas completo para cleanup continuo y mantenimiento del posture de device.
 
+### DV-AUTH-029
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `22`, `26`, `30`, `32`, `35`, `47`, `49`
+- Alcance objetivo:
+  - convertir el inventory agregado por `device_reference` en una superficie operable y no solo de lectura,
+  - coordinar revocacion de sesiones y trusted device del mismo dispositivo desde una sola operacion,
+  - y preservar la semantica de self-revoke y `fresh-auth` para mutaciones remotas.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationManagerInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `AuthManager` ahora expone `revokeDevice(string $deviceReference)` como operacion agregada sobre el security center por dispositivo,
+  - esa operacion revoca todas las sesiones del `device_reference` y olvida el trusted-device record asociado cuando existe,
+  - el self-revoke del dispositivo actual continua permitido aunque la freshness window haya vencido, pero una revocacion remota desde `devices()` exige `auth.fresh_authentication_required` con `operation=device_revocation`,
+  - y la suite feature valida revocacion remota coordinada, bloqueo por fresh-auth remoto y self-revoke del dispositivo actual con limpieza de cookies y sesion.
+- Gap natural posterior:
+  - la coordinacion distribuida sigue apoyada en el store compartido configurado y aun no en politicas/locks de multi-nodo mas fuertes,
+  - falta authorization/policy administrativa multi-actor sobre devices y sessions agregadas,
+  - falta tooling operativo mas expresivo para el security center y reconciliacion multi-store,
+  - y falta un scheduler/background processing mas completo para cleanup continuo y mantenimiento del posture de device.
+
 ## Estado consolidado del sistema Authentication
 
 ### Ya utilizable hoy
@@ -878,6 +901,8 @@ Sirve como control operativo de:
 44. El subsistema ya soporta trusted-device records persistentes, alta del dispositivo actual con MFA y olvido/revocacion de trusted devices propios.
 45. `AuthManager::devices()` ya entrega un inventory agregado por `device_reference` que combina sessions y trusted devices en una sola vista de security center.
 46. El inventory agregado ya funciona sobre `file` stores compartidos entre instancias distintas y expone hints de management sin exponer secretos bearer.
+47. `AuthManager::revokeDevice()` ya permite revocar desde el inventory agregado todas las sesiones y el trusted device asociados a un `device_reference`.
+48. La revocacion agregada por dispositivo preserva self-revoke del dispositivo actual y exige fresh-auth cuando la mutacion afecta estado remoto.
 
 ### Ya preparado de forma adyacente
 
@@ -900,7 +925,7 @@ Sirve como control operativo de:
 
 1. Remember-me.
 2. Bearer/API tokens.
-3. mutaciones distribuidas mas fuertes sobre sessions y trusted devices, policy/authorization multi-actor y background cleanup mas completo.
+3. policy/authorization multi-actor sobre sessions y devices agregadas, tooling operativo del security center y background cleanup mas completo.
 4. Passkeys / WebAuthn.
 5. OIDC / federacion.
 6. Risk engine.
