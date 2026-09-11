@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Policy/Authorization Multi-Actor Administrativa + Tooling Del Security Center + Reconciliacion Background + Alineacion Con Controllers Security`
+`Policy/Authorization Multi-Actor Administrativa + Reporting Operativo Del Security Center + Alineacion Con Controllers Security`
 
 Documentos objetivo:
 
@@ -352,11 +352,10 @@ Documentos objetivo:
 ### Entregables minimos sugeridos
 
 1. policy/authorization administrativa multi-actor sobre sessions y devices agregadas.
-2. tooling operativo mas expresivo para el security center y el management distribuido.
-3. reconciliacion/background processing del estado derivado sobre stores compartidos.
-4. inventory agregado por dispositivo sin exponer secretos bearer.
-5. limpieza y retencion gobernada de tombstones de recovery.
-6. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
-7. alineacion de `AuthenticationContext` con Controllers Security.
-8. suite de pruebas de integracion del flujo endurecido.
-9. base para stores persistentes adicionales del provider local o providers mutables mas ricos.
+2. reporting operativo mas expresivo para el security center y el management distribuido.
+3. inventory agregado por dispositivo sin exponer secretos bearer.
+4. limpieza y retencion gobernada de tombstones de recovery.
+5. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
+6. alineacion de `AuthenticationContext` con Controllers Security.
+7. suite de pruebas de integracion del flujo endurecido.
+8. base para stores persistentes adicionales del provider local o providers mutables mas ricos.
