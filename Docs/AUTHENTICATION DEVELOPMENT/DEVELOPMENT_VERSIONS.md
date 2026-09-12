@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-11`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y `AuthenticationStrength` desde una sesion autenticada real de `Quantum\Auth` cuando no existe bearer token, `AuthenticationContext` ya formaliza claims administrativas compartidas (`auth_management_authority`, `auth_management_ownership_proof`, `auth_management_scopes`) reutilizables por Controllers Security, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + audit/export operativo del security center + governance de claims administrativas privilegiadas`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, export explicito de actores administrativos gobernados via \`--management-actors\`, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y `AuthenticationStrength` desde una sesion autenticada real de `Quantum\Auth` cuando no existe bearer token, `AuthenticationContext` ya formaliza claims administrativas compartidas (`auth_management_authority`, `auth_management_ownership_proof`, `auth_management_scopes`) reutilizables por Controllers Security, y ahora gobierna claims privilegiadas (`auth_management_claims_source`, `auth_management_privilege_level`) distinguiendo self-service por default de actores administrativos explicitamente configurados, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + mutaciones administrativas reales sobre inventories agregados + audit/export operativo mas rico`
 
 ## Versionado de desarrollo
 
@@ -997,6 +997,55 @@ Sirve como control operativo de:
   - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas,
   - falta export/auditoria mas rica del security center y observabilidad operacional continua,
   - falta governance mas fuerte para claims administrativas privilegiadas y actores no self-service,
+  - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
+
+### DV-AUTH-036
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `02`, `03`, `05`, `26`, `37`, `47`, `49`, `50`
+- Alcance objetivo:
+  - gobernar las claims administrativas privilegiadas para que no nazcan del self-service por default,
+  - permitir que `AuthenticationContext` resuelva esas claims privilegiadas desde la identidad autenticada cuando fueron configuradas explicitamente,
+  - y validar en Controllers Security una policy real que distinga un actor administrativo gobernado de una sesion comun de self-service.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Context/AuthenticationContext.php`
+  - `vendor/voltstack/framework/src/Quantum/Controllers/Security/Context/ControllerSecurityContextFactory.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+  - `vendor/voltstack/framework/tests/Unit/ControllerSecurityContextFactoryTest.php`
+  - `vendor/voltstack/framework/tests/Feature/SkeletonSecuritySmokeTest.php`
+  - `app/Controllers/SecurityDemoController.php`
+- Resultado:
+  - `AuthenticationContext` ahora expone `managementClaimsSource()` y `managementPrivilegeLevel()` ademas de hacer fallback a atributos de identidad para `auth_management_*` cuando esas claims fueron declaradas explicitamente en el provider,
+  - el self-service sigue recibiendo defaults seguros (`self_service_defaults`, `self_service`) y no se promociona accidentalmente a actor privilegiado,
+  - `ControllerSecurityContextFactory` ya proyecta `management_claims_source` y `management_privilege_level` junto con el resto de claims administrativas compartidas,
+  - y la smoke suite valida que una sesion MFA comun no puede pasar un endpoint de export privilegiado, mientras que un `ops-admin` con claims gobernadas desde identidad si puede hacerlo sin bearer token artificial.
+- Gap natural posterior:
+  - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas,
+  - falta export/auditoria mas rica del security center y observabilidad operacional continua,
+  - falta gobierno operativo mas fuerte sobre actores administrativos, delegacion y export seguro,
+  - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
+
+### DV-AUTH-037
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `26`, `35`, `47`, `48`, `49`
+- Alcance objetivo:
+  - extender el reporte operativo del security center para exportar actores administrativos gobernados de forma explicita,
+  - derivar esas claims de governance usando el mismo lenguaje de `AuthenticationContext` ya compartido con Controllers Security,
+  - y mantener la salida segura por defecto, exponiendo ese detalle solo cuando el operador lo solicita.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Feature/SkeletonSecuritySmokeTest.php`
+- Resultado:
+  - `auth:security-center:report` ahora soporta `--management-actors` para exportar identidades con claims administrativas gobernadas,
+  - el comando deriva `management_authority`, `management_ownership_proof`, `management_claims_source`, `management_privilege_level` y `management_scopes` construyendo un `AuthenticationContext` temporal por sesion, sin duplicar reglas de negocio,
+  - el resumen seguro ahora informa `governed_management_sessions` y `governed_management_identities`,
+  - y la suite valida tanto el reporte seguro por defecto como la exportacion JSON explicita de actores administrativos gobernados y las regresiones de self-service vs privileged actor en Controllers Security.
+- Gap natural posterior:
+  - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas,
+  - faltan mutaciones administrativas reales sobre inventories agregados mas alla del self-service del identity owner,
+  - falta audit/export mas rico del security center con gobierno de delegacion y trazabilidad operacional,
   - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
 
 ## Estado consolidado del sistema Authentication

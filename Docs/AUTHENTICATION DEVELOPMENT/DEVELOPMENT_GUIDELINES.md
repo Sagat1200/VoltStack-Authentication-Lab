@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Policy/Authorization Multi-Actor Administrativa + Audit/Export Operativo Del Security Center + Governance De Claims Administrativas Privilegiadas`
+`Policy/Authorization Multi-Actor Administrativa + Mutaciones Administrativas Reales Sobre Inventories Agregados + Audit/Export Operativo Mas Rico`
 
 Documentos objetivo:
 
@@ -352,8 +352,8 @@ Documentos objetivo:
 ### Entregables minimos sugeridos
 
 1. policy/authorization administrativa multi-actor sobre sessions y devices agregadas.
-2. audit/export operativo mas rico del security center sobre stores compartidos.
-3. governance de claims administrativas privilegiadas compartidas entre Auth y Controllers Security.
+2. mutaciones administrativas reales sobre sessions y devices agregadas mas alla del self-service actual.
+3. audit/export operativo mas rico del security center sobre stores compartidos y actores administrativos gobernados.
 4. inventory agregado por dispositivo con hints administrativos consistentes sin exponer secretos bearer.
 5. limpieza y retencion gobernada de tombstones de recovery.
 6. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
