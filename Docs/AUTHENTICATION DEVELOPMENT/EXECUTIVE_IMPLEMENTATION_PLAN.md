@@ -574,13 +574,13 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-034
+### DV-AUTH-035
 
 Alcance sugerido:
 
 - policy/authorization multi-actor para revocacion administrativa
-- ownership de management privilegiado sobre sessions y devices
 - audit/export operativo del security center distribuido
+- formalizacion de claims administrativas compartidas entre Auth y Controllers Security
 
 Entregables minimos:
 

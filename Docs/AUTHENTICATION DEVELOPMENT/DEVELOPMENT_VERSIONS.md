@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-11`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, hints administrativos agregados `management_sensitivity/management_reason_code` sobre `devices()`, Controllers Security ya puede derivar principal, claims y `AuthenticationStrength` desde una sesion autenticada real de `Quantum\Auth` cuando no existe bearer token, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + audit/export operativo del security center + ownership de management privilegiado`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y `AuthenticationStrength` desde una sesion autenticada real de `Quantum\Auth` cuando no existe bearer token, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + audit/export operativo del security center + formalizacion de claims administrativas compartidas`
 
 ## Versionado de desarrollo
 
@@ -947,6 +947,31 @@ Sirve como control operativo de:
   - sigue faltando ownership/policy administrativa multi-actor sobre sessions y devices agregadas,
   - falta export/auditoria mas rica del security center y observabilidad operacional continua,
   - falta formalizar mejor las claims administrativas y de actor privilegiado compartidas entre Auth y Controllers Security,
+  - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
+
+### DV-AUTH-034
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `26`, `30`, `35`, `47`, `48`, `49`
+- Alcance objetivo:
+  - formalizar ownership explicito del management agregado sobre `devices()` sin romper la API publica actual,
+  - reflejar ese mismo ownership en el reporte operativo `auth:security-center:report`,
+  - y dejar un lenguaje mas estable para policy administrativa futura y claims compartidas con Controllers Security.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Devices/DeviceInventorySummary.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+- Resultado:
+  - `devices()` ahora expone `management_authority` y `management_ownership_proof` para distinguir management del `session_owner` actual frente al `identity_owner` cuando el agregado representa estado remoto o mixto,
+  - la semantica de ownership queda separada de `management_mode` y `requires_reauthentication`, evitando mezclar quien puede operar con el nivel de prueba requerido para hacerlo,
+  - `auth:security-center:report` ya refleja `management_authority=identity_owner` y `management_ownership_proof=identity_session` en el detalle operativo por identidad,
+  - y la suite feature/unit valida el ownership del inventory agregado local/remoto y el reporte JSON seguro del security center con esos nuevos hints.
+- Gap natural posterior:
+  - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas,
+  - falta export/auditoria mas rica del security center y observabilidad operacional continua,
+  - falta formalizar mejor las claims administrativas compartidas entre Auth y Controllers Security,
   - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
 
 ## Estado consolidado del sistema Authentication
