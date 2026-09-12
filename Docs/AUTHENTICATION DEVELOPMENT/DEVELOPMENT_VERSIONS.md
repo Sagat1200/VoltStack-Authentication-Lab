@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-11`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + reporting operativo del security center + alineacion con Controllers Security`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, hints administrativos agregados `management_sensitivity/management_reason_code` sobre `devices()`, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + alineacion profunda con Controllers Security + audit/export operativo del security center`
 
 ## Versionado de desarrollo
 
@@ -897,6 +897,33 @@ Sirve como control operativo de:
   - falta authorization/policy administrativa multi-actor sobre devices y sessions agregadas,
   - falta reporting operativo mas expresivo del security center y export/auditoria del estado agregado,
   - y falta una alineacion mas profunda con Controllers Security y flujos administrativos del framework.
+
+### DV-AUTH-032
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `26`, `35`, `47`, `48`, `49`
+- Alcance objetivo:
+  - introducir reporting operativo seguro del security center sobre stores compartidos,
+  - exponer hints administrativos agregados mas expresivos en `devices()` para UI y management distribuido,
+  - y acercar el lenguaje de management del subsistema Authentication al de Controllers Security sin romper la API publica actual.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Devices/DeviceInventorySummary.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/ConsoleApplication.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/ConsoleApplicationTest.php`
+- Resultado:
+  - `devices()` ahora expone `management_sensitivity` y `management_reason_code` para distinguir management directo, remoto, trusted-device y operaciones que exigen fresh auth,
+  - el framework ya ofrece `auth:security-center:report` con salida segura por defecto, detalle opcional por identidad, soporte `--json` y exposicion de public IDs solo cuando el operador filtra una identidad concreta,
+  - el comando resume sesiones activas, trusted devices activos, identidades unicas, dispositivos agregados y agregados con management elevado sobre stores compartidos,
+  - y la suite feature/unit valida tanto los nuevos hints administrativos del inventory agregado como el registro del comando en la consola default del framework.
+- Gap natural posterior:
+  - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas,
+  - falta una alineacion mas profunda entre `AuthenticationContext`, `devices()` y Controllers Security para operaciones privilegiadas,
+  - falta export/auditoria mas rica del security center y observabilidad operacional continua,
+  - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
 
 ## Estado consolidado del sistema Authentication
 
