@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Policy/Authorization Multi-Actor Administrativa + Alineacion Profunda Con Controllers Security + Audit/Export Operativo Del Security Center`
+`Policy/Authorization Multi-Actor Administrativa + Audit/Export Operativo Del Security Center + Ownership Del Management Privilegiado`
 
 Documentos objetivo:
 
@@ -352,7 +352,7 @@ Documentos objetivo:
 ### Entregables minimos sugeridos
 
 1. policy/authorization administrativa multi-actor sobre sessions y devices agregadas.
-2. policy/authorization multi-actor sobre sessions y devices agregadas.
+2. ownership explicito de actor privilegiado para management remoto y revocacion administrativa.
 3. audit/export operativo mas rico del security center sobre stores compartidos.
 4. inventory agregado por dispositivo con hints administrativos consistentes sin exponer secretos bearer.
 5. limpieza y retencion gobernada de tombstones de recovery.
