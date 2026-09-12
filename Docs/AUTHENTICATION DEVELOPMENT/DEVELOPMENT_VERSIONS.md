@@ -14,8 +14,8 @@ Sirve como control operativo de:
 ## Corte actual
 
 - Fecha de actualizacion: `2026-09-11`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, export explicito de actores administrativos gobernados via \`--management-actors\`, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y `AuthenticationStrength` desde una sesion autenticada real de `Quantum\Auth` cuando no existe bearer token, `AuthenticationContext` ya formaliza claims administrativas compartidas (`auth_management_authority`, `auth_management_ownership_proof`, `auth_management_scopes`) reutilizables por Controllers Security, y ahora gobierna claims privilegiadas (`auth_management_claims_source`, `auth_management_privilege_level`) distinguiendo self-service por default de actores administrativos explicitamente configurados, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + mutaciones administrativas reales sobre inventories agregados + audit/export operativo mas rico`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, export explicito de actores administrativos gobernados via \`--management-actors\`, mutacion administrativa operacional via \`auth:security-center:revoke-device\` ahora gobernada por actor explicito + `actor_session_public_id` con claims administrativas validas, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y `AuthenticationStrength` desde una sesion autenticada real de `Quantum\Auth` cuando no existe bearer token, `AuthenticationContext` ya formaliza claims administrativas compartidas (`auth_management_authority`, `auth_management_ownership_proof`, `auth_management_scopes`) reutilizables por Controllers Security, y ahora gobierna claims privilegiadas (`auth_management_claims_source`, `auth_management_privilege_level`) distinguiendo self-service por default de actores administrativos explicitamente configurados, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
+- Foco del siguiente ciclo recomendado: `policy/authorization multi-actor administrativa + delegacion/ownership administrativo mas rico + audit/export operativo persistente`
 
 ## Versionado de desarrollo
 
@@ -1046,6 +1046,53 @@ Sirve como control operativo de:
   - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas,
   - faltan mutaciones administrativas reales sobre inventories agregados mas alla del self-service del identity owner,
   - falta audit/export mas rico del security center con gobierno de delegacion y trazabilidad operacional,
+  - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
+
+### DV-AUTH-038
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `26`, `30`, `35`, `48`, `49`
+- Alcance objetivo:
+  - introducir una mutacion administrativa real sobre el inventory agregado del security center sin esperar aun al policy engine multi-actor completo en runtime,
+  - coordinar la revocacion operacional de sesiones y trusted devices por `identity + device_reference` sobre stores compartidos,
+  - y mantener un contrato seguro y auditable mediante `--dry-run`, `--scope`, `--json` y detalle opcional de public IDs.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterRevokeDeviceCommand.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/ConsoleApplication.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/ConsoleApplicationTest.php`
+- Resultado:
+  - el framework ya ofrece `auth:security-center:revoke-device` para revocar operacionalmente un dispositivo agregado de una identidad concreta usando `--identity`, `--device-reference`, `--type` y `--scope`,
+  - la mutacion coordina revocacion de sesiones y trusted devices apoyandose en los repositorios globales `all()` y conserva la semantica de seguridad operacional mediante `--dry-run`, `--json` y `--include-public-ids`,
+  - el comando puede limitar el alcance a `sessions`, `trusted-devices` o `all`, dejando una base util para futura delegacion/policy multi-actor,
+  - y la suite unitaria valida tanto el dry-run como la persistencia real, el recorte por scope y el registro del comando en la consola default del framework.
+- Gap natural posterior:
+  - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas,
+  - falta gobierno/delegacion explicita de quien puede ejecutar mutaciones administrativas privilegiadas,
+  - falta audit/export mas rico del security center con trazabilidad operacional persistente,
+  - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
+
+### DV-AUTH-039
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `02`, `26`, `35`, `48`, `49`
+- Alcance objetivo:
+  - endurecer la mutacion administrativa operacional del security center con una prueba explicita de actor gobernado,
+  - exigir que la revocacion agregada por consola se ejecute usando una sesion activa del actor administrativo y no solo parametros de target,
+  - y reutilizar las mismas claims administrativas gobernadas del subsistema para decidir si ese actor puede operar sobre `admin_device_management`.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterRevokeDeviceCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+- Resultado:
+  - `auth:security-center:revoke-device` ahora exige `--actor-identity`, `--actor-type` y `--actor-session-public-id` ademas del target operativo,
+  - el comando construye un `AuthenticationContext` temporal desde la sesion publica del actor y solo autoriza la mutacion cuando detecta `management_authority=administrative_actor`, `management_claims_source=identity_attributes`, `management_privilege_level=privileged_admin` y scope `admin_device_management`,
+  - la salida JSON/texto ahora registra el actor autorizado y devuelve `reason_code=unauthorized_management_actor` cuando la prueba de gobierno falla,
+  - y la suite valida tanto el dry-run y la ejecucion real con actor gobernado como el rechazo cuando se intenta operar con una sesion no privilegiada.
+- Gap natural posterior:
+  - sigue faltando authorization/policy administrativa multi-actor sobre sessions y devices agregadas dentro del runtime principal,
+  - falta ownership/delegacion administrativa mas rica que una sola clase de actor privilegiado,
+  - falta audit/export mas rico del security center con trazabilidad operacional persistente,
   - y la coordinacion distribuida sigue dependiendo del store compartido configurado sin politicas multi-nodo mas fuertes.
 
 ## Estado consolidado del sistema Authentication

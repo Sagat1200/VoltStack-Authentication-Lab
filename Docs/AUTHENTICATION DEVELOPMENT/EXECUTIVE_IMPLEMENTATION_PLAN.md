@@ -574,13 +574,13 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-038
+### DV-AUTH-040
 
 Alcance sugerido:
 
 - policy/authorization multi-actor para revocacion administrativa
-- mutaciones administrativas reales sobre inventories agregados
-- audit/export operativo mas rico del security center distribuido
+- delegacion/ownership administrativo mas rico sobre inventories agregados
+- audit/export operativo persistente del security center distribuido
 
 Entregables minimos:
 
