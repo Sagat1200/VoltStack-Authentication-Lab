@@ -574,26 +574,26 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-040
+### DV-AUTH-045
 
 Alcance sugerido:
 
-- policy/authorization multi-actor para revocacion administrativa
-- delegacion/ownership administrativo mas rico sobre inventories agregados
-- audit/export operativo persistente del security center distribuido
+- mutaciones remotas multi-actor mas profundas sobre inventory agregado
+- delegacion administrativa mas rica sobre inventories agregados y actores gobernados
+- coordinacion distribuida mas fuerte del security center sobre stores compartidos
 
 Entregables minimos:
 
-1. ownership/policy de sesiones y trusted devices por identidad/dispositivo/actor administrativo.
+1. ownership/policy de sesiones y trusted devices por identidad/dispositivo/actor administrativo dentro del runtime principal.
 2. revocacion administrativa y coordinacion multi-nodo mas fuerte.
-3. export/auditoria del `auth:security-center:report` y metadatos operativos del inventory agregado.
-4. gobierno y delegacion operativa de actores administrativos entre Auth y Controllers Security.
+3. gobierno y delegacion operativa de actores administrativos entre Auth y Controllers Security.
+4. policy/runtime compartido mas expresivo para actors administrativos sobre inventory agregado y mutaciones remotas.
 5. pruebas de integracion y hardening adicionales.
 6. evolucion del provider local hacia fuentes persistentes mas ricas.
 
 Resultado esperado:
 
-- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, reporting operativo y governance multi-actor,
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor y coordinacion distribuida,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 
