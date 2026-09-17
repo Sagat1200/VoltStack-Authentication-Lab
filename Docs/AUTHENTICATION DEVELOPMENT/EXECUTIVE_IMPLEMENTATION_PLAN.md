@@ -574,13 +574,13 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-045
+### DV-AUTH-046
 
 Alcance sugerido:
 
-- mutaciones remotas multi-actor mas profundas sobre inventory agregado
 - delegacion administrativa mas rica sobre inventories agregados y actores gobernados
 - coordinacion distribuida mas fuerte del security center sobre stores compartidos
+- mutaciones remotas multi-identidad en el runtime principal
 
 Entregables minimos:
 
