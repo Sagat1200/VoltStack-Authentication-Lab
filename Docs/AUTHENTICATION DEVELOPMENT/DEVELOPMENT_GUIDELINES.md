@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Delegacion Administrativa Mas Rica En Runtime + Coordinacion Distribuida Mas Fuerte Del Security Center + Delegacion Administrativa Gobernada Mas Rica`
+`Delegacion Administrativa Mas Rica En Runtime + Coordinacion Distribuida Mas Fuerte Del Security Center + Coordinacion Actor-Target Delegada Mas Rica`
 
 Documentos objetivo:
 
@@ -353,7 +353,7 @@ Documentos objetivo:
 
 1. delegacion administrativa multi-actor mas rica sobre sessions y devices agregadas mas alla de `direct_admin/delegated_admin`.
 2. coordinacion distribuida mas fuerte del security center sobre stores compartidos y escenarios multi-nodo.
-3. delegacion administrativa gobernada mas rica sobre inventories agregados dentro del runtime principal.
+3. coordinacion actor-target delegada mas rica sobre inventories agregados dentro del runtime principal.
 4. inventory agregado por dispositivo con hints administrativos consistentes sin exponer secretos bearer.
 5. limpieza y retencion gobernada de tombstones de recovery.
 6. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.

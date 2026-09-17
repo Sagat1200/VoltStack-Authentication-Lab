@@ -574,13 +574,13 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-051
+### DV-AUTH-052
 
 Alcance sugerido:
 
 - delegacion administrativa mas rica sobre inventories agregados y actores gobernados
 - coordinacion distribuida mas fuerte del security center sobre stores compartidos
-- delegacion administrativa gobernada mas rica en el runtime principal
+- coordinacion actor-target delegada mas rica en el runtime principal
 
 Entregables minimos:
 
