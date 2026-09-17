@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`Delegacion Administrativa Mas Rica En Runtime + Coordinacion Distribuida Mas Fuerte Del Security Center + Coordinacion Actor-Target Delegada Mas Rica`
+`DV-AUTH-053: Coordinacion Actor-Target Delegada Por Alcance Mas Profunda + Coordinacion Distribuida Multi-Nodo + Observabilidad Administrativa`
 
 Documentos objetivo:
 
@@ -351,12 +351,12 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. delegacion administrativa multi-actor mas rica sobre sessions y devices agregadas mas alla de `direct_admin/delegated_admin`.
-2. coordinacion distribuida mas fuerte del security center sobre stores compartidos y escenarios multi-nodo.
-3. coordinacion actor-target delegada mas rica sobre inventories agregados dentro del runtime principal.
-4. inventory agregado por dispositivo con hints administrativos consistentes sin exponer secretos bearer.
-5. limpieza y retencion gobernada de tombstones de recovery.
-6. denial model mas rico para distinguir `required`, `guest-only`, `stale-session`, `revoked-session`, `fresh-auth-required`, `step_up` y assurance insufficiente.
-7. alineacion mas profunda de `AuthenticationContext` y el management agregado con Controllers Security.
-8. suite de pruebas de integracion del flujo endurecido.
-9. base para stores persistentes adicionales del provider local o providers mutables mas ricos.
+1. profundizar la relacion actor-target delegada mas alla del alcance binario actual sobre `sessions` y `trusted-devices`.
+2. reforzar la coordinacion distribuida del security center sobre stores compartidos y escenarios multi-nodo.
+3. enriquecer audit trail, metricas y trazabilidad de mutaciones administrativas gobernadas.
+4. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
+5. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
+6. ampliar el denial model para mutaciones administrativas y razones operativas por alcance.
+7. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
+8. ampliar la suite de pruebas de integracion del flujo endurecido con casos distribuidos y delegados.
+9. seguir preparando la base para stores persistentes adicionales del provider local o providers mutables mas ricos.

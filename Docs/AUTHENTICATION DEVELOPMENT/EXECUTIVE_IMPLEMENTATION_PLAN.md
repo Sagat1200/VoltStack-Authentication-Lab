@@ -574,26 +574,26 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-052
+### DV-AUTH-053
 
 Alcance sugerido:
 
-- delegacion administrativa mas rica sobre inventories agregados y actores gobernados
-- coordinacion distribuida mas fuerte del security center sobre stores compartidos
-- coordinacion actor-target delegada mas rica en el runtime principal
+- coordinacion actor-target delegada por alcance mas profunda sobre inventories agregados y mutaciones remotas
+- coordinacion distribuida multi-nodo mas fuerte del security center sobre stores compartidos
+- observabilidad administrativa mas rica sobre runtime principal y tooling operativo
 
 Entregables minimos:
 
-1. ownership/policy de sesiones y trusted devices por identidad/dispositivo/actor administrativo dentro del runtime principal.
-2. revocacion administrativa y coordinacion multi-nodo mas fuerte.
-3. gobierno y delegacion operativa de actores administrativos entre Auth y Controllers Security.
-4. policy/runtime compartido mas expresivo para actors administrativos sobre inventory agregado y mutaciones remotas.
-5. pruebas de integracion y hardening adicionales.
-6. evolucion del provider local hacia fuentes persistentes mas ricas.
+1. modelar relaciones actor-target delegadas mas profundas que la simple combinacion actual de `direct_admin/delegated_admin` y scope `sessions|trusted-devices`.
+2. reforzar la revocacion administrativa y la coordinacion multi-nodo sobre stores compartidos.
+3. enriquecer audit trail, metricas y trazabilidad operativa de mutaciones gobernadas.
+4. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados y distribuidos.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
 
 Resultado esperado:
 
-- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor y coordinacion distribuida,
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor, coordinacion distribuida y observabilidad operativa,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 
