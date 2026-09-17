@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-053: Coordinacion Actor-Target Delegada Por Alcance Mas Profunda + Coordinacion Distribuida Multi-Nodo + Observabilidad Administrativa`
+`DV-AUTH-054: Coordinacion Distribuida Multi-Nodo Del Security Center + Observabilidad Administrativa Gobernada`
 
 Documentos objetivo:
 
@@ -351,12 +351,11 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. profundizar la relacion actor-target delegada mas alla del alcance binario actual sobre `sessions` y `trusted-devices`.
-2. reforzar la coordinacion distribuida del security center sobre stores compartidos y escenarios multi-nodo.
-3. enriquecer audit trail, metricas y trazabilidad de mutaciones administrativas gobernadas.
-4. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
-5. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
-6. ampliar el denial model para mutaciones administrativas y razones operativas por alcance.
-7. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
-8. ampliar la suite de pruebas de integracion del flujo endurecido con casos distribuidos y delegados.
-9. seguir preparando la base para stores persistentes adicionales del provider local o providers mutables mas ricos.
+1. reforzar la coordinacion distribuida del security center sobre stores compartidos y escenarios multi-nodo.
+2. enriquecer audit trail, metricas y trazabilidad de mutaciones administrativas gobernadas.
+3. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
+4. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
+5. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas.
+6. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
+7. ampliar la suite de pruebas de integracion del flujo endurecido con casos distribuidos, delegados y multi-nodo.
+8. seguir preparando la base para stores persistentes adicionales del provider local o providers mutables mas ricos.

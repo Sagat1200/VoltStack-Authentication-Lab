@@ -574,22 +574,22 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-053
+### DV-AUTH-054
 
 Alcance sugerido:
 
-- coordinacion actor-target delegada por alcance mas profunda sobre inventories agregados y mutaciones remotas
 - coordinacion distribuida multi-nodo mas fuerte del security center sobre stores compartidos
 - observabilidad administrativa mas rica sobre runtime principal y tooling operativo
+- trazabilidad gobernada mas fuerte sobre mutaciones administrativas distribuidas
 
 Entregables minimos:
 
-1. modelar relaciones actor-target delegadas mas profundas que la simple combinacion actual de `direct_admin/delegated_admin` y scope `sessions|trusted-devices`.
-2. reforzar la revocacion administrativa y la coordinacion multi-nodo sobre stores compartidos.
-3. enriquecer audit trail, metricas y trazabilidad operativa de mutaciones gobernadas.
-4. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
-5. ampliar pruebas de integracion y hardening sobre escenarios delegados y distribuidos.
-6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+1. reforzar la revocacion administrativa y la coordinacion multi-nodo sobre stores compartidos.
+2. enriquecer audit trail, metricas y trazabilidad operativa de mutaciones gobernadas.
+3. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
+4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos y multi-nodo.
+5. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+6. sentar base para observabilidad administrativa mas util en produccion.
 
 Resultado esperado:
 
