@@ -15,7 +15,7 @@ Sirve como control operativo de:
 
 - Fecha de actualizacion: `2026-09-14`
 - Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices en self-service, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto para self-service, pero ahora con bypass gobernado para revocacion remota por dispositivo agregado cuando el actor actual tiene `admin_device_management`, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, export explicito de actores administrativos gobernados via \`--management-actors\`, snapshots JSONL durables opcionales del reporte via \`--export-log\`, mutacion administrativa operacional via \`auth:security-center:revoke-device\` gobernada por actor explicito + \`actor_session_public_id\` con claims administrativas validas, ahora con distincion operativa entre \`direct_admin\` y \`delegated_admin\` derivada desde \`AuthenticationContext\`, con una decision compartida de management gobernado (\`hasGovernedManagementClaims\`, \`canAdministrativelyManageDevices\`, \`managementAuthorizationMode\`, \`managementAuthorizationReasonCode\`) reutilizada por \`report\` y \`revoke-device\`, y ahora tambien proyectada por el runtime principal del inventario agregado mediante `management_actor_governed`, `management_actor_authorized`, `management_actor_authorization_mode` y `management_actor_authorization_reason_code`, sin mezclar esos hints con el ownership del dispositivo, y ahora tambien con audit trail JSONL durable opcional via \`--audit-log\` para ejecucion, dry-run y rechazo de actores no gobernados, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y \`AuthenticationStrength\` desde una sesion autenticada real de \`Quantum\Auth\` cuando no existe bearer token, \`AuthenticationContext\` ya formaliza claims administrativas compartidas (\`auth_management_authority\`, \`auth_management_ownership_proof\`, \`auth_management_scopes\`) reutilizables por Controllers Security, y ahora gobierna claims privilegiadas (\`auth_management_claims_source\`, \`auth_management_privilege_level\`) y modo de autorizacion administrativa (\`managementAuthorizationMode()\`) distinguiendo self-service por default de actores administrativos explicitamente configurados, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required`
-- Foco del siguiente ciclo recomendado: `delegacion administrativa mas rica en runtime + coordinacion distribuida mas fuerte del security center + mutaciones remotas multi-identidad`
+- Foco del siguiente ciclo recomendado: `delegacion administrativa mas rica en runtime + coordinacion distribuida mas fuerte del security center + inventory multi-identidad mas expresivo`
 
 ## Versionado de desarrollo
 
@@ -1235,6 +1235,30 @@ Sirve como control operativo de:
 - Gap natural posterior:
   - falta delegacion administrativa mas rica que `direct_admin` vs `delegated_admin`,
   - falta extender esta semantica a mutaciones remotas multi-identidad dentro del runtime principal,
+  - falta coordinacion distribuida mas fuerte del security center sobre stores compartidos y escenarios multi-nodo,
+  - y faltan logs estructurados, metricas y tracing mas amplios alrededor del subsistema Auth.
+
+### DV-AUTH-046
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `22`, `26`, `35`, `47`, `49`
+- Alcance objetivo:
+  - llevar una primera mutacion remota multi-identidad al runtime principal,
+  - reutilizar la misma policy administrativa gobernada que ya usan el inventory agregado y el tooling operativo,
+  - y operar sobre stores compartidos sin depender solo del comando de consola.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Contracts/AuthenticationManagerInterface.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+- Resultado:
+  - `AuthenticationManagerInterface` y `AuthManager` ahora exponen `revokeManagedDevice(identity, device_reference, type?)` como primera mutacion remota multi-identidad del runtime principal,
+  - el metodo usa la misma decision compartida de management gobernado para rechazar actores no autorizados y para permitir actores administrativos gobernados sobre stores compartidos,
+  - la mutacion ya puede revocar sesiones y trusted-device records del target por `identity + device_reference` sin requerir pasar por `auth:security-center:revoke-device`,
+  - y la suite valida tanto el caso exitoso de un actor gobernado como el rechazo limpio de un actor no gobernado.
+- Gap natural posterior:
+  - falta delegacion administrativa mas rica que `direct_admin` vs `delegated_admin`,
+  - falta un inventory multi-identidad mas expresivo dentro del runtime principal para que esta mutacion no dependa de conocer externamente el `device_reference`,
   - falta coordinacion distribuida mas fuerte del security center sobre stores compartidos y escenarios multi-nodo,
   - y faltan logs estructurados, metricas y tracing mas amplios alrededor del subsistema Auth.
 
