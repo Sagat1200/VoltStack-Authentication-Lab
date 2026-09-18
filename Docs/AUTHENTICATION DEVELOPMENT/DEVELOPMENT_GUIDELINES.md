@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-055: Coordinacion Multi-Nodo Mas Fuerte + Correlacion Y Metricas Administrativas`
+`DV-AUTH-056: Coordinacion Multi-Nodo Mas Fuerte + Metricas Administrativas Gobernadas`
 
 Documentos objetivo:
 
@@ -352,7 +352,7 @@ Documentos objetivo:
 ### Entregables minimos sugeridos
 
 1. reforzar la coordinacion distribuida del security center sobre stores compartidos y escenarios multi-nodo.
-2. enriquecer correlacion operativa y metricas administrativas sobre mutaciones gobernadas.
+2. enriquecer metricas administrativas sobre mutaciones gobernadas usando la base de correlacion operativa ya disponible.
 3. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
 4. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
 5. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas.

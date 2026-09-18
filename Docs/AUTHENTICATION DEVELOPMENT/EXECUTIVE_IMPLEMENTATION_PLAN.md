@@ -574,18 +574,18 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-055
+### DV-AUTH-056
 
 Alcance sugerido:
 
 - coordinacion distribuida multi-nodo mas fuerte del security center sobre stores compartidos
-- correlacion y metricas administrativas mas ricas sobre runtime principal y tooling operativo
+- metricas administrativas mas ricas sobre runtime principal y tooling operativo
 - trazabilidad gobernada mas fuerte sobre mutaciones administrativas distribuidas
 
 Entregables minimos:
 
 1. reforzar la revocacion administrativa y la coordinacion multi-nodo sobre stores compartidos.
-2. enriquecer correlacion operativa, audit trail y metricas de mutaciones gobernadas.
+2. enriquecer metricas de mutaciones gobernadas reutilizando la correlacion operativa ya disponible.
 3. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
 4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos y multi-nodo.
 5. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
