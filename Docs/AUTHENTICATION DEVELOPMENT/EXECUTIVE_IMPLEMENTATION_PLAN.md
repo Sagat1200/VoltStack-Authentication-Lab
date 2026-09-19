@@ -574,17 +574,17 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-062
+### DV-AUTH-063
 
 Alcance sugerido:
 
-- coordinacion distribuida multi-nodo mas fuerte del security center sobre stores compartidos
-- activity drift y consistencia reciente entre stores compartidos sobre runtime principal y tooling operativo
+- gobernanza operativa mas fuerte del `activity_drift` sobre stores compartidos y escenarios multi-nodo
+- explicabilidad mas accionable de consistencia reciente entre stores sobre runtime principal y tooling operativo
 - trazabilidad gobernada mas fuerte sobre mutaciones administrativas distribuidas
 
 Entregables minimos:
 
-1. reforzar la revocacion administrativa y la coordinacion multi-nodo sobre stores compartidos.
+1. convertir `activity_drift` en una señal operativa mas accionable por store y por ventana reciente.
 2. enriquecer activity drift y consistencia reciente entre stores reutilizando la correlacion operativa, metrica, longitudinal, `store_cohorts`, `time_windows`, `store_time_windows` y `multi_store_summary` ya disponible.
 3. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
 4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos y multi-nodo.
@@ -593,7 +593,7 @@ Entregables minimos:
 
 Resultado esperado:
 
-- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor, coordinacion distribuida y observabilidad operativa,
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor, coordinacion distribuida, deteccion de drift y observabilidad operativa,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 

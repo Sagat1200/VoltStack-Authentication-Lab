@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-062: Coordinacion Multi-Nodo Mas Fuerte + Activity Drift Entre Stores Compartidos`
+`DV-AUTH-063: Gobernanza Operativa Del Activity Drift + Consistencia Multi-Store Accionable`
 
 Documentos objetivo:
 
@@ -351,8 +351,8 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. reforzar la coordinacion distribuida del security center sobre stores compartidos y escenarios multi-nodo.
-2. enriquecer deteccion de `activity drift` y consistencia reciente entre stores compartidos usando la base de correlacion, metrica, historial, `store cohorts`, `time windows`, `store_time_windows` y `multi_store_summary` ya disponible.
+1. convertir `activity_drift` en una señal operativa mas accionable para escenarios multi-store y multi-nodo.
+2. enriquecer la explicabilidad del drift por store, ventana y severidad reutilizando `store cohorts`, `time windows`, `store_time_windows` y `multi_store_summary`.
 3. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
 4. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
 5. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas.
