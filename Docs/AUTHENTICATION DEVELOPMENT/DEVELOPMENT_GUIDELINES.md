@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-066: Policy Multi-Actor Mas Fina Sobre Guardias Distribuidas`
+`DV-AUTH-067: Denials Distribuidos Sensibles Al Actor Y Tipo De Mutacion`
 
 Documentos objetivo:
 
@@ -351,8 +351,8 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. graduar `distributed_guard` por severidad, scope y tipo de mutacion administrativa remota.
-2. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas tomando en cuenta drift reciente, cobertura por ventana y estado por store.
+1. volver `distributed_guard` sensible al perfil del actor administrativo y al tipo concreto de mutacion remota.
+2. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas tomando en cuenta drift reciente, cobertura por ventana, estado por store, severidad y `scope`.
 3. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
 4. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
 5. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.

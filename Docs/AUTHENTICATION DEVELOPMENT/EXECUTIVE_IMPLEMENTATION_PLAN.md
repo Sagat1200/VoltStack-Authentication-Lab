@@ -574,17 +574,17 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-066
+### DV-AUTH-067
 
 Alcance sugerido:
 
-- policy multi-actor mas fina sobre guardias distribuidas y denials por severidad/scope
+- denials distribuidos sensibles al actor y al tipo de mutacion remota
 - endurecimiento operativo de mutaciones administrativas sobre runtime principal y tooling operativo
 - trazabilidad gobernada mas fuerte sobre mutaciones administrativas distribuidas
 
 Entregables minimos:
 
-1. graduar `distributed_guard` por severidad, scope y tipo de mutacion administrativa remota.
+1. volver `distributed_guard` sensible al perfil del actor y al tipo concreto de mutacion administrativa remota.
 2. enriquecer activity drift y consistencia reciente entre stores reutilizando la correlacion operativa, metrica, longitudinal, `store_cohorts`, `time_windows`, `store_time_windows` y `multi_store_summary` ya disponible.
 3. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
 4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos y multi-nodo.
