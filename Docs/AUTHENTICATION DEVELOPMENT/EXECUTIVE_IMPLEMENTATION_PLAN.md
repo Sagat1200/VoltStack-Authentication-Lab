@@ -574,17 +574,17 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-065
+### DV-AUTH-066
 
 Alcance sugerido:
 
-- aplicacion de denials distribuidos derivados del `activity_drift` a mutaciones remotas reales
+- policy multi-actor mas fina sobre guardias distribuidas y denials por severidad/scope
 - endurecimiento operativo de mutaciones administrativas sobre runtime principal y tooling operativo
 - trazabilidad gobernada mas fuerte sobre mutaciones administrativas distribuidas
 
 Entregables minimos:
 
-1. aplicar `should_deny_remote_mutations` y `remote_mutation_denial_reason_code` a mutaciones remotas reales del security center.
+1. graduar `distributed_guard` por severidad, scope y tipo de mutacion administrativa remota.
 2. enriquecer activity drift y consistencia reciente entre stores reutilizando la correlacion operativa, metrica, longitudinal, `store_cohorts`, `time_windows`, `store_time_windows` y `multi_store_summary` ya disponible.
 3. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
 4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos y multi-nodo.
