@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-063: Gobernanza Operativa Del Activity Drift + Consistencia Multi-Store Accionable`
+`DV-AUTH-064: Escalacion Operativa Del Activity Drift + Denials Distribuidos Mas Expresivos`
 
 Documentos objetivo:
 
@@ -351,11 +351,11 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. convertir `activity_drift` en una señal operativa mas accionable para escenarios multi-store y multi-nodo.
-2. enriquecer la explicabilidad del drift por store, ventana y severidad reutilizando `store cohorts`, `time windows`, `store_time_windows` y `multi_store_summary`.
+1. traducir `recommended_action` de `activity_drift` a escalaciones y respuestas operativas mas concretas para escenarios multi-store y multi-nodo.
+2. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas tomando en cuenta drift reciente, cobertura por ventana y estado por store.
 3. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
 4. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
-5. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas.
-6. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
-7. ampliar la suite de pruebas de integracion del flujo endurecido con casos distribuidos, delegados y multi-nodo.
-8. seguir preparando la base para stores persistentes adicionales del provider local o providers mutables mas ricos.
+5. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
+6. ampliar la suite de pruebas de integracion del flujo endurecido con casos distribuidos, delegados y multi-nodo.
+7. seguir preparando la base para stores persistentes adicionales del provider local o providers mutables mas ricos.
+8. reforzar la explicabilidad operativa para que reportes, auditorias y mutaciones compartan la misma semantica distribuida.
