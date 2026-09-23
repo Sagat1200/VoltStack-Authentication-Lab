@@ -574,17 +574,17 @@ Una fase se considera realmente cerrada solo si:
 
 El siguiente corte de implementacion recomendado es:
 
-### DV-AUTH-064
+### DV-AUTH-065
 
 Alcance sugerido:
 
-- escalacion operativa del `activity_drift` sobre stores compartidos y escenarios multi-nodo
-- denials distribuidos mas expresivos para mutaciones administrativas sobre runtime principal y tooling operativo
+- aplicacion de denials distribuidos derivados del `activity_drift` a mutaciones remotas reales
+- endurecimiento operativo de mutaciones administrativas sobre runtime principal y tooling operativo
 - trazabilidad gobernada mas fuerte sobre mutaciones administrativas distribuidas
 
 Entregables minimos:
 
-1. traducir `recommended_action` de `activity_drift` a respuestas operativas mas concretas por store y por ventana reciente.
+1. aplicar `should_deny_remote_mutations` y `remote_mutation_denial_reason_code` a mutaciones remotas reales del security center.
 2. enriquecer activity drift y consistencia reciente entre stores reutilizando la correlacion operativa, metrica, longitudinal, `store_cohorts`, `time_windows`, `store_time_windows` y `multi_store_summary` ya disponible.
 3. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
 4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos y multi-nodo.
@@ -593,7 +593,7 @@ Entregables minimos:
 
 Resultado esperado:
 
-- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor, coordinacion distribuida, deteccion de drift, escalacion operativa y observabilidad operativa,
+- el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor, coordinacion distribuida, deteccion de drift, escalacion operativa, denials distribuidos y observabilidad operativa,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 

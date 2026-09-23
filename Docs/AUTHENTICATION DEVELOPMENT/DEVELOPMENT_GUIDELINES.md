@@ -330,7 +330,7 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-064: Escalacion Operativa Del Activity Drift + Denials Distribuidos Mas Expresivos`
+`DV-AUTH-065: Aplicacion De Denials Distribuidos Del Drift A Mutaciones Remotas`
 
 Documentos objetivo:
 
@@ -351,7 +351,7 @@ Documentos objetivo:
 
 ### Entregables minimos sugeridos
 
-1. traducir `recommended_action` de `activity_drift` a escalaciones y respuestas operativas mas concretas para escenarios multi-store y multi-nodo.
+1. aplicar `should_deny_remote_mutations` y `remote_mutation_denial_reason_code` a mutaciones remotas reales del security center.
 2. ampliar el denial model para mutaciones administrativas y razones operativas distribuidas tomando en cuenta drift reciente, cobertura por ventana y estado por store.
 3. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
 4. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
