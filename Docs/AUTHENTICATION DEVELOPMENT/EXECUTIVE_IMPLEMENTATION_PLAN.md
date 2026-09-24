@@ -572,28 +572,167 @@ Una fase se considera realmente cerrada solo si:
 
 ## Siguiente corte recomendado
 
-El siguiente corte de implementacion recomendado es:
+El siguiente corte de implementacion recomendado es `DV-AUTH-078`.
 
-### DV-AUTH-069
+### DV-AUTH-078
 
 Alcance sugerido:
 
-- policy multi-actor mas profunda sobre ownership administrativo y actor-target delegado
-- overlays operativos administrativos mas expresivos entre runtime principal y tooling operativo
+- extender `resource_coverage`, `affected_resource_kinds` y la nocion de subconjunto afectado al `--export-log`, `--audit-log` y `revoke-device`
+- reforzar la trazabilidad cruzada entre `report`, export, audit trail durable y `revoke-device` cuando distintos stores sostienen distintos subconjuntos del impacto esperado
+- seguir ampliando la cobertura end-to-end del runtime principal para taxonomias actor-target-scope administrativas adicionales y degradaciones parciales distribuidas
+
+Entregables minimos:
+
+1. extender `report`, `--export-log` y `--audit-log` para publicar el mismo lenguaje de `resource_coverage`, `affected_resource_kinds` y subconjuntos afectados.
+2. reforzar `longitudinal_metrics`, `store_cohorts`, export y auditoria durable para correlacionar mejor `mutation_actor_profiles`, `target_store_assessments`, recursos afectados y drift segun la mutacion pedida.
+3. ampliar `revoke-device` y la suite feature del runtime principal con escenarios adicionales que fijen esas taxonomias actor-target-scope y degradaciones parciales en `managedDevices()` y `revokeManagedDevice()`.
+4. mantener un policy/runtime compartido mas expresivo entre `AuthenticationContext`, `AuthManager`, `report` y `revoke-device`.
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados, directos, multi-nodo, ordenacion estable de perfiles y degradaciones parciales adicionales.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva la semantica gradual ya introducida, pero con una correlacion mas rica entre drift, subconjuntos afectados, cohortes distribuidas, mutacion y decision operativa compartida entre reporte y auditoria,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+## Cortes recomendados previos
+### DV-AUTH-077
+
+Alcance sugerido:
+
+- correlacionar mejor `mutation_scope_profiles`, `mutation_actor_profiles` y `target_store_assessments` cuando una misma policy actor-aware cubre subconjuntos distintos de recursos afectados
+- extender la trazabilidad cruzada entre `report`, export, audit trail durable y `revoke-device` para degradaciones parciales multi-store mas accionables
+- seguir ampliando la cobertura end-to-end del runtime principal para taxonomias actor-target-scope administrativas adicionales y degradaciones parciales distribuidas
+
+Entregables minimos:
+
+1. extender `report` para distinguir mejor que cohortes, stores o recursos afectados sostienen cada `policy_source`, `policy_reason_code` y denial actor-aware cuando el drift es parcial.
+2. reforzar `longitudinal_metrics`, `store_cohorts`, export y auditoria durable para correlacionar mejor `mutation_actor_profiles`, `target_store_assessments`, recursos afectados y drift segun la mutacion pedida.
+3. ampliar la suite feature del runtime principal con escenarios adicionales que fijen esas taxonomias actor-target-scope y degradaciones parciales en `managedDevices()` y `revokeManagedDevice()`.
+4. mantener un policy/runtime compartido mas expresivo entre `AuthenticationContext`, `AuthManager`, `report` y `revoke-device`.
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados, directos, multi-nodo, ordenacion estable de perfiles y degradaciones parciales adicionales.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva la semantica gradual ya introducida, pero con una correlacion mas rica entre drift, recursos afectados, cohortes distribuidas, mutacion y decision operativa,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-076
+
+Alcance sugerido:
+
+- enriquecer `mutation_scope_profiles` con vistas mas actor-aware para explicar mejor `policy_source`, `policy_reason_code` y `reason_code` por mutacion
+- profundizar la correlacion por cohorte/store entre drift, audit trail durable, export operativo y decisiones distribuidas reales
+- seguir ampliando la cobertura end-to-end del runtime principal para taxonomias actor-target-scope administrativas adicionales y sus degradaciones distribuidas
+
+Entregables minimos:
+
+1. extender `report` para proyectar perfiles de mutacion mas actor-aware sin depender exclusivamente del contrato global de `operational_response`.
+2. reforzar `longitudinal_metrics`, `store_cohorts`, export y auditoria durable para correlacionar mejor `mutation_kinds`, `policy_source`, `policy_reason_code`, `reason_code`, `target_store_assessments` y drift segun la mutacion pedida.
+3. ampliar la suite feature del runtime principal con escenarios adicionales que fijen esas taxonomias actor-target-scope en `managedDevices()` y `revokeManagedDevice()`.
+4. mantener un policy/runtime compartido mas expresivo entre `AuthenticationContext`, `AuthManager`, `report` y `revoke-device`.
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados, directos, multi-nodo y degradaciones parciales adicionales.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva la semantica gradual ya introducida, pero con una correlacion mas rica entre drift, cohortes distribuidas, mutacion y decision operativa,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-075
+
+Alcance sugerido:
+
+- extender overlays graduales equivalentes sobre `delegated_admin_full_scope_target` y otros casos administrativos plenos que aun resuelven en policies demasiado generales
+- enriquecer la correlacion entre drift, `mutation_scope_profiles` y audit/export operativo por tipo de mutacion
+- seguir ampliando la cobertura end-to-end del runtime principal para taxonomias actor-target-scope adicionales y sus degradaciones distribuidas
+
+Entregables minimos:
+
+1. extender `target_scope_relation_policies` y `distributed_guard_scope_decision` a mas combinaciones `delegated_admin_full_scope_target` y overlays administrativos plenos equivalentes.
+2. reforzar `report`, export y auditoria durable para correlacionar mejor `mutation_scope_profiles`, `target_store_assessments`, drift, `policy_source` y `reason_code` segun la mutacion pedida.
+3. ampliar la suite feature del runtime principal con escenarios adicionales que fijen esas taxonomias actor-target-scope en `managedDevices()` y `revokeManagedDevice()`.
+4. mantener un policy/runtime compartido mas expresivo entre `AuthenticationContext`, `AuthManager`, `report` y `revoke-device`.
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados plenos, multi-nodo y degradaciones parciales adicionales.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva la semantica gradual ya introducida, pero con contratos mas completos tambien para delegacion administrativa plena,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-072
+
+Alcance sugerido:
+
+- hardening adicional de guardia distribuida sobre perfiles multi-store intermedios y `store_assessments`
+- observabilidad operativa mas rica para degradaciones actor-target-scope
 - trazabilidad gobernada mas fuerte sobre mutaciones administrativas distribuidas y ownership proyectado
 
 Entregables minimos:
 
-1. profundizar la policy multi-actor para ownership administrativo mas rico y relaciones actor-target delegadas mas expresivas dentro de la mutacion administrativa remota.
-2. enriquecer overlays y decisiones operativas reutilizando la correlacion operativa, metrica, longitudinal, `store_cohorts`, `time_windows`, `store_time_windows` y `multi_store_summary` ya disponible.
+1. enriquecer `operational_response` y `distributed_guard_scope_decision` con perfiles adicionales derivados de `coordination_profile`, `store_assessments`, `store_cohorts`, `time_windows` y `store_time_windows`.
+2. ampliar la trazabilidad operativa para explicar mejor que scopes y targets administrativos quedan degradados en cada drift.
 3. mantener un policy/runtime compartido mas expresivo para actores administrativos sobre inventory agregado, mutaciones remotas y tooling de consola.
-4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos y multi-nodo.
+4. ampliar pruebas de integracion y hardening sobre escenarios delegados, distribuidos, multi-nodo y visibilidad irregular entre stores.
 5. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
 6. sentar base para observabilidad administrativa mas util en produccion.
 
 Resultado esperado:
 
 - el flujo password + session ya no es solo funcional, sino mejor coordinado entre runtime, recovery, policy administrativa, management de dispositivos, governance multi-actor, coordinacion distribuida, deteccion de drift, escalacion operativa, denials distribuidos y observabilidad operativa,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-073
+
+Alcance sugerido:
+
+- consolidar overlays graduales adicionales sobre `target_scope_relation_policies` y `distributed_guard_scope_decision`
+- ampliar cobertura end-to-end del runtime principal para degradaciones actor-target-scope ya publicadas por el tooling operativo
+- enriquecer la explicabilidad para que el reporte resuma mejor que stores y targets sostienen cada degradacion parcial
+
+Entregables minimos:
+
+1. extender las combinaciones `actor-target-scope` cubiertas por la guardia distribuida, especialmente sobre perfiles graduales ya presentes como `recent_lag` y `concentrated_activity`.
+2. ampliar la suite feature del runtime principal para fijar como se proyectan y respetan esas degradaciones en `managedDevices()` y `revokeManagedDevice()`.
+3. reforzar `report` para que resuma mejor la relacion entre `store_assessments`, `target_store_fingerprints`, `degraded_scope_profiles` y el drift observado.
+4. mantener un policy/runtime compartido mas expresivo entre `AuthenticationContext`, `AuthManager`, `report` y `revoke-device`.
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados, multi-nodo y degradaciones parciales adicionales.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva la semantica gradual ya introducida, pero con contratos mas completos entre runtime principal y tooling operativo,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
+
+### DV-AUTH-074
+
+Alcance sugerido:
+
+- profundizar overlays graduales equivalentes sobre targets `direct_admin_*` y combinaciones adicionales de `delegated_admin_full_scope_target`
+- enriquecer la correlacion operativa entre `target_store_fingerprints`, `target_store_assessments`, drift y denials por tipo de mutacion
+- seguir tendiendo puentes entre la semantica distribuida del tooling operativo y los paths publicos del runtime principal
+
+Entregables minimos:
+
+1. extender `target_scope_relation_policies` y `distributed_guard_scope_decision` a mas combinaciones `direct_admin_*` y casos graduales adicionales sobre targets administrados plenos.
+2. reforzar `report` para resumir mejor que stores explican cada denial o degradacion parcial segun el tipo de mutacion pedida.
+3. ampliar la suite feature del runtime principal con escenarios adicionales que fijen esas taxonomias actor-target-scope en `managedDevices()` y `revokeManagedDevice()`.
+4. mantener un policy/runtime compartido mas expresivo entre `AuthenticationContext`, `AuthManager`, `report` y `revoke-device`.
+5. ampliar pruebas de integracion y hardening sobre escenarios directos, delegados, multi-nodo y degradaciones parciales adicionales.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva la semantica gradual ya introducida, pero con overlays mas completos para actores directos y delegados,
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 

@@ -330,32 +330,24 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-069: Policy Multi-Actor Mas Profunda Y Actor-Target Delegado Operacional`
+`DV-AUTH-078: Trazabilidad Cruzada De Resource Coverage En Report, Export Y Revoke-Device`
 
 Documentos objetivo:
 
-- `02_AUTHENTICATION_DOMAIN_MODEL_AND_CORE_CONCEPTS.md`
-- `03_AUTHENTICATION_LIFECYCLE_AND_REQUEST_PIPELINE.md`
-- `04_AUTHENTICATION_MANAGER_AND_ORCHESTRATION_SYSTEM.md`
-- `05_AUTHENTICATION_FIREWALL_GUARD_AND_CONTEXT_RESOLUTION_SYSTEM.md`
-- `06_AUTHENTICATOR_SYSTEM.md`
-- `07_AUTHENTICATOR_RESOLUTION_SELECTION_AND_PRIORITY_SYSTEM.md`
-- `08_AUTHENTICATION_PASSPORT_CREDENTIAL_AND_EVIDENCE_SYSTEM.md`
-- `09_IDENTITY_MODEL_PROVIDER_RESOLUTION_AND_FEDERATED_MAPPING_SYSTEM.md`
-- `10_IDENTITY_SECURITY_STATE_ACCOUNT_STATUS_AND_AUTHENTICATION_ELIGIBILITY_SYSTEM.md`
-- `11_PASSWORD_AUTHENTICATION_HASHING_POLICY_AND_CREDENTIAL_LIFECYCLE_SYSTEM.md`
-- `12_SESSION_AUTHENTICATION_PERSISTENCE_CONTEXT_RESTORATION_AND_SESSION_LIFECYCLE_SYSTEM.md`
-- `22_AUTHENTICATION_LOGIN_LOGOUT_SIGN_IN_SIGN_OUT_ENTRY_POINT_AND_USER_AUTHENTICATION_FLOW_SYSTEM.md`
+- `24_AUDIT_OBSERVABILITY_LOGGING_METRICS_TRACING_AND_EXPLAINABILITY.md`
+- `25_FAILURE_ERROR_EXCEPTION_DENIAL_AND_SECURITY_RESPONSE_HANDLING.md`
+- `26_TESTING_VERIFICATION_SECURITY_ASSURANCE_AND_CONFORMANCE.md`
+- `35_SESSION_DEVICE_CREDENTIAL_INVENTORY_SECURITY_CENTER_AND_USER_SECURITY_MANAGEMENT.md`
 - `47_AUTHENTICATION_DEVELOPER_EXPERIENCE_FACADE_HELPER_CONFIGURATION_BOOTSTRAP_AND_APPLICATION_INTEGRATION_SYSTEM.md`
+- `48_ADMINISTRATION_OPERATIONAL_TOOLING_DIAGNOSTICS_SECURITY_OPERATIONS_AND_PRODUCTION_MANAGEMENT.md`
 - `49_AUTHENTICATION_REFERENCE_IMPLEMENTATION_DEFAULT_COMPONENTS_SECURE_DEFAULTS_AND_FRAMEWORK_INTEGRATION_SYSTEM.md`
 
 ### Entregables minimos sugeridos
 
-1. profundizar la policy multi-actor sobre ownership administrativo y relaciones actor-target delegadas mas ricas dentro de `AuthenticationContext`, runtime principal y tooling operativo.
-2. ampliar los overlays operativos distribuidos para que no solo distingan privilegio/relacion, sino tambien perfiles administrativos compuestos y ownership gobernado mas expresivo.
-3. mantener el inventory agregado por dispositivo con hints administrativos consistentes y mas expresivos sin exponer secretos bearer.
-4. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
-5. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
-6. ampliar la suite de pruebas de integracion del flujo endurecido con casos distribuidos, delegados y multi-nodo.
+1. llevar `resource_coverage`, `affected_resource_kinds` y la nocion de subconjunto afectado a `--export-log`, `--audit-log` y `revoke-device` para que reportes, snapshots y auditoria durable hablen el mismo lenguaje.
+2. reforzar la trazabilidad cruzada entre `report`, `--export-log`, `--audit-log-source` y `revoke-device` para explicar mejor que store, cohorte o subconjunto de recursos sostiene cada denial o allowance bajo drift parcial.
+3. seguir llevando esta semantica distribuida al runtime principal mediante cobertura end-to-end adicional en `managedDevices()` y `revokeManagedDevice()`, especialmente para degradaciones parciales adicionales y taxonomias administrativas aun no fijadas en feature tests.
+4. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
+5. ampliar la suite de pruebas de integracion del flujo endurecido con casos directos, delegados, multi-nodo, ordenacion estable de perfiles y degradaciones graduales adicionales.
+6. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
 7. seguir preparando la base para stores persistentes adicionales del provider local o providers mutables mas ricos.
-8. reforzar la explicabilidad operativa para que reportes, auditorias y mutaciones compartan la misma semantica distribuida.

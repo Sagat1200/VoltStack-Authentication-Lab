@@ -13,9 +13,9 @@ Sirve como control operativo de:
 
 ## Corte actual
 
-- Fecha de actualizacion: `2026-09-22`
-- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices en self-service, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto para self-service, pero ahora con bypass gobernado para revocacion remota por dispositivo agregado cuando el actor actual tiene `admin_device_management`, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, export explicito de actores administrativos gobernados via \`--management-actors\`, snapshots JSONL durables opcionales del reporte via \`--export-log\`, mutacion administrativa operacional via \`auth:security-center:revoke-device\` gobernada por actor explicito + \`actor_session_public_id\` con claims administrativas validas, ahora con distincion operativa entre \`direct_admin\` y \`delegated_admin\` derivada desde \`AuthenticationContext\`, con una decision compartida de management gobernado (\`hasGovernedManagementClaims\`, \`canAdministrativelyManageDevices\`, \`managementAuthorizationMode\`, \`managementAuthorizationReasonCode\`) reutilizada por \`report\` y \`revoke-device\`, y ahora tambien proyectada por el runtime principal del inventario agregado mediante `management_actor_governed`, `management_actor_authorized`, `management_actor_authorization_mode` y `management_actor_authorization_reason_code`, refinada ademas por alcance mediante `canAdministrativelyManageDeviceSessions()`, `managementSessionAuthorizationMode()`, `managementSessionAuthorizationReasonCode()`, `canAdministrativelyManageTrustedDevices()`, `managementTrustedDeviceAuthorizationMode()` y `managementTrustedDeviceAuthorizationReasonCode()`, con proyeccion explicita de `management_actor_can_manage_sessions`, `management_actor_session_authorization_mode`, `management_actor_session_authorization_reason_code`, `management_actor_can_manage_trusted_devices`, `management_actor_trusted_device_authorization_mode` y `management_actor_trusted_device_authorization_reason_code`, sin mezclar esos hints con el ownership del dispositivo, y ahora tambien con un perfil fino actor-target por alcance mediante `managementActorTargetScopeRelation()` y `managementActorTargetScopeReasonCode()`, proyectado por el runtime como `management_actor_target_scope_relation` y `management_actor_target_scope_reason_code`, ademas del ownership target explicito via `management_target_identity`, `management_target_type` y `management_target_matches_current_identity`, con claims administrativas crudas del actor actual via `management_actor_authority`, `management_actor_ownership_proof`, `management_actor_claims_source`, `management_actor_privilege_level` y `management_actor_scopes`, audit trail JSONL durable opcional via \`--audit-log\` para ejecucion, dry-run y rechazo de actores no gobernados, con `operational_context` en `auth:security-center:report`, `auth:security-center:revoke-device`, snapshots `--export-log` y `--audit-log`, incluyendo `app_name`, `app_env`, drivers activos, rutas de store observadas, topologia (`shared_file_store_candidate`, `mixed_driver_topology`, `in_memory_local_topology`) y `store_fingerprint`, con `correlation_id` y `operation_id` explicitos en reportes, auditorias y snapshots durables para enlazar lectura, export y mutacion operativa multi-instancia, con `administrative_metrics` en reportes, snapshots, revocaciones y auditorias para resumir actores gobernados, modos de autorizacion, coberturas de alcance y outcome operativo por ejecucion, con `--audit-log-source` y `longitudinal_metrics` en `auth:security-center:report` para agregar historial durable de revocaciones por outcome, scope, perfil de alcance, modos administrativos, recursos afectados y cohortes de store/topologia, con `store_cohorts` ordenadas por fingerprint/topologia para separar cohortes distribuidas dentro del historial longitudinal, con `time_windows` sobre `last_5m`, `last_15m` y `last_60m` para leer ventanas operativas distribuidas relativas al ultimo evento observado, con `store_time_windows` para consolidar temporalmente cada store sobre esas mismas ventanas, `multi_store_summary` para perfilar si la actividad reciente esta `distributed`, `concentrated`, `single_store` o `idle`, y ahora un `activity_drift` mas accionable que ademas de detectar `recent_lag`, `partial_visibility`, `store_dropout`, `single_store` o `none`, proyecta `recommended_action`, `reference_store_fingerprint`, `reference_store_topology`, `window_coverage`, `store_assessments` y una `operational_response` con `response_mode`, `escalation_level`, `should_deny_remote_mutations`, `remote_mutation_denial_reason_code`, `remote_mutation_scope_policy`, `allowed_remote_mutation_scopes`, `denied_remote_mutation_scopes`, `scope_denial_reason_codes`, `authorization_mode_scope_policies`, `next_step` y `target_store_fingerprints`, ahora extendida tambien con `privilege_scope_policies` y `target_relation_scope_policies` para volver mas concreta la lectura operativa del drift distribuido; ademas, `auth:security-center:revoke-device` ya soporta `--audit-log-source` para evaluar esa misma guardia distribuida antes de mutar, expone `distributed_guard` y `distributed_guard_scope_decision` en payloads y auditorias, y ahora gradua los denials remotos no solo por severidad/scope sino tambien por `authorization_mode`, `actor_privilege_level` y `actor_target_relation`, distinguiendo overlays para `direct_admin`/`delegated_admin`, `privileged_admin`/`delegated_support` y relaciones `self_governed`/`direct_administrative_target`/`delegated_administrative_target` sobre una misma mutacion remota; ademas, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y \`AuthenticationStrength\` desde una sesion autenticada real de \`Quantum\Auth\` cuando no existe bearer token, \`AuthenticationContext\` ya formaliza claims administrativas compartidas (\`auth_management_authority\`, \`auth_management_ownership_proof\`, \`auth_management_scopes\`) reutilizables por Controllers Security, y ahora gobierna claims privilegiadas (\`auth_management_claims_source\`, \`auth_management_privilege_level\`) y modo de autorizacion administrativa (\`managementAuthorizationMode()\`) distinguiendo self-service por default de actores administrativos explicitamente configurados, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required, ademas de un par multi-identidad gobernado en runtime principal formado por `managedDevices(identity, type?)` y `revokeManagedDevice(identity, device_reference, type?, scope)` con scope parcial `all|sessions|trusted-devices`, todo ello ya alineado con el comportamiento por alcance del runtime y del comando operacional`
-- Foco del siguiente ciclo recomendado: `policy multi-actor mas profunda + profundizacion adicional del modelo actor-target delegado + overlays operativos administrativos mas expresivos`
+- Fecha de actualizacion: `2026-09-24`
+- Estado general: `Existe lenguaje base del subsistema, password authentication real con rehash persistente opcional, session auth endurecida con tombstones minimos de recovery, inventory seguro por session_public_id, metadata de sesion y device reducida, refresh server-side de last_activity, hints de accion para revocacion, policy de revocacion mas expresiva, fresh-auth configurable para revocacion remota de sesiones y trusted devices en self-service, device_reference derivado pseudonimizado, trusted-device records server-side gestionables, trusted-device credential cliente duradera validada, challenge reduction para MFA obligatorio en dispositivos reconocidos, rotacion del trusted-device credential al reducir challenge, revocacion por replay del credential anterior, inventory de trusted devices con hints \`can_forget/requires_reauthentication/revocation_scope/revocation_mode\`, inventory agregado \`devices()\` por \`device_reference\` combinando sessions y trusted devices, revocacion coordinada \`revokeDevice()\` y bulk revoke \`revokeOtherDevices()\` sobre ese inventory agregado con semantica de self-revoke y fresh-auth remoto para self-service, pero ahora con bypass gobernado para revocacion remota por dispositivo agregado cuando el actor actual tiene \`admin_device_management\`, lectura del security center sobre file stores compartidos entre instancias, soporte operativo de reconciliacion con \`auth:devices:reconcile\`, reporting operativo con \`auth:security-center:report\`, export explicito de actores administrativos gobernados via \`--management-actors\`, snapshots JSONL durables opcionales del reporte via \`--export-log\`, mutacion administrativa operacional via \`auth:security-center:revoke-device\` gobernada por actor explicito + \`actor_session_public_id\` con claims administrativas validas, ahora con distincion operativa entre \`direct_admin\` y \`delegated_admin\` derivada desde \`AuthenticationContext\`, con una decision compartida de management gobernado (\`hasGovernedManagementClaims\`, \`canAdministrativelyManageDevices\`, \`managementAuthorizationMode\`, \`managementAuthorizationReasonCode\`) reutilizada por \`report\` y \`revoke-device\`, y ahora tambien proyectada por el runtime principal del inventario agregado mediante \`management_actor_governed\`, \`management_actor_authorized\`, \`management_actor_authorization_mode\` y \`management_actor_authorization_reason_code\`, refinada ademas por alcance mediante \`canAdministrativelyManageDeviceSessions()\`, \`managementSessionAuthorizationMode()\`, \`managementSessionAuthorizationReasonCode()\`, \`canAdministrativelyManageTrustedDevices()\`, \`managementTrustedDeviceAuthorizationMode()\` y \`managementTrustedDeviceAuthorizationReasonCode()\`, con proyeccion explicita de \`management_actor_can_manage_sessions\`, \`management_actor_session_authorization_mode\`, \`management_actor_session_authorization_reason_code\`, \`management_actor_can_manage_trusted_devices\`, \`management_actor_trusted_device_authorization_mode\` y \`management_actor_trusted_device_authorization_reason_code\`, sin mezclar esos hints con el ownership del dispositivo, y ahora tambien con un perfil fino actor-target por alcance mediante \`managementActorTargetScopeRelation()\` y \`managementActorTargetScopeReasonCode()\`, proyectado por el runtime como \`management_actor_target_scope_relation\` y \`management_actor_target_scope_reason_code\`, ademas del ownership target explicito via \`management_target_identity\`, \`management_target_type\` y \`management_target_matches_current_identity\`, con claims administrativas crudas del actor actual via \`management_actor_authority\`, \`management_actor_ownership_proof\`, \`management_actor_claims_source\`, \`management_actor_privilege_level\` y \`management_actor_scopes\`, audit trail JSONL durable opcional via \`--audit-log\` para ejecucion, dry-run y rechazo de actores no gobernados, con \`operational_context\` en \`auth:security-center:report\`, \`auth:security-center:revoke-device\`, snapshots \`--export-log\` y \`--audit-log\`, incluyendo \`app_name\`, \`app_env\`, drivers activos, rutas de store observadas, topologia (\`shared_file_store_candidate\`, \`mixed_driver_topology\`, \`in_memory_local_topology\`) y \`store_fingerprint\`, con \`correlation_id\` y \`operation_id\` explicitos en reportes, auditorias y snapshots durables para enlazar lectura, export y mutacion operativa multi-instancia, con \`administrative_metrics\` en reportes, snapshots, revocaciones y auditorias para resumir actores gobernados, modos de autorizacion, coberturas de alcance y outcome operativo por ejecucion, con \`--audit-log-source\` y \`longitudinal_metrics\` en \`auth:security-center:report\` para agregar historial durable de revocaciones por outcome, scope, perfil de alcance, modos administrativos, recursos afectados y cohortes de store/topologia, con \`store_cohorts\` ordenadas por fingerprint/topologia para separar cohortes distribuidas dentro del historial longitudinal, con \`time_windows\` sobre \`last_5m\`, \`last_15m\` y \`last_60m\` para leer ventanas operativas distribuidas relativas al ultimo evento observado, con \`store_time_windows\` para consolidar temporalmente cada store sobre esas mismas ventanas, \`multi_store_summary\` para perfilar si la actividad reciente esta \`distributed\`, \`concentrated\`, \`single_store\` o \`idle\`, y ahora un \`activity_drift\` mas accionable que ademas de detectar \`recent_lag\`, \`partial_visibility\`, \`store_dropout\`, \`single_store\` o \`none\`, proyecta \`recommended_action\`, \`reference_store_fingerprint\`, \`reference_store_topology\`, \`window_coverage\`, \`store_assessments\` y una \`operational_response\` con \`response_mode\`, \`escalation_level\`, \`should_deny_remote_mutations\`, \`remote_mutation_denial_reason_code\`, \`remote_mutation_scope_policy\`, \`allowed_remote_mutation_scopes\`, \`denied_remote_mutation_scopes\`, \`scope_denial_reason_codes\`, \`authorization_mode_scope_policies\`, \`next_step\` y \`target_store_fingerprints\`, ahora extendida tambien con \`privilege_scope_policies\`, \`target_relation_scope_policies\` y \`target_scope_relation_policies\` para volver mas concreta la lectura operativa del drift distribuido y, en `recent_lag`, graduar explicitamente `direct_admin => allow_all`, `delegated_admin => sessions_only` y `none => deny_all`, incluyendo overlays de `target_scope_relation` como `delegated_admin_sessions_scope_target` y `delegated_admin_trusted_devices_scope_target`; ademas, \`auth:security-center:revoke-device\` ya soporta \`--audit-log-source\` para evaluar esa misma guardia distribuida antes de mutar, expone \`distributed_guard\` y \`distributed_guard_scope_decision\` en payloads y auditorias, y ahora gradua los denials remotos no solo por severidad/scope sino tambien por \`authorization_mode\`, \`actor_privilege_level\`, \`actor_target_relation\` y \`actor_target_scope_relation\`, distinguiendo overlays para \`direct_admin\`/\`delegated_admin\`, \`privileged_admin\`/\`delegated_support\`, relaciones \`self_governed\`/\`direct_administrative_target\`/\`delegated_administrative_target\` y targets como \`delegated_admin_sessions_scope_target\` o \`delegated_admin_trusted_devices_scope_target\` sobre una misma mutacion remota; ademas, hints administrativos agregados \`management_sensitivity/management_reason_code\` y ownership explicito \`management_authority/management_ownership_proof\` sobre \`devices()\`, Controllers Security ya puede derivar principal, claims y \`AuthenticationStrength\` desde una sesion autenticada real de \`Quantum\Auth\` cuando no existe bearer token, \`AuthenticationContext\` ya formaliza claims administrativas compartidas (\`auth_management_authority\`, \`auth_management_ownership_proof\`, \`auth_management_scopes\`) reutilizables por Controllers Security, y ahora gobierna claims privilegiadas (\`auth_management_claims_source\`, \`auth_management_privilege_level\`) y modo de autorizacion administrativa (\`managementAuthorizationMode()\`) distinguiendo self-service por default de actores administrativos explicitamente configurados, enumeracion global de sessions/trusted devices para tooling administrativo, soporte HTTP para multiples Set-Cookie, retencion minima de tombstones y comando \`auth:sessions:cleanup\` extendido para trusted devices expirados, resolver formal, facade Auth, provider dedicado, middleware aliases auth/guest/mfa, MFA local, step-up operativo y denials explicitos auth.revoked_session/auth.stale_session/auth.fresh_authentication_required, ademas de un par multi-identidad gobernado en runtime principal formado por \`managedDevices(identity, type?)\` y \`revokeManagedDevice(identity, device_reference, type?, scope)\` con scope parcial \`all|sessions|trusted-devices\`, todo ello ya alineado con el comportamiento por alcance del runtime y del comando operacional`
+- Foco del siguiente ciclo recomendado: `trazabilidad cruzada report/export/revoke por subconjunto afectado + degradacion parcial multi-store`
 
 ## Versionado de desarrollo
 
@@ -1782,6 +1782,222 @@ Sirve como control operativo de:
   - falta enriquecer perfiles intermedios de guardia operativa para escenarios mas irregulares de multi-nodo,
   - falta seguir profundizando relaciones actor-target delegadas mas alla del perfil actual de `self_governed/direct/delegated`,
   - y falta seguir madurando policy/authorization administrativa mas expresiva dentro del runtime principal.
+
+### DV-AUTH-069
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `35`, `47`, `48`, `49`
+- Alcance objetivo:
+  - formalizar la semantica actor-target por alcance dentro de `AuthenticationContext` para que el runtime y el tooling no dependan de inferencias implícitas,
+  - proyectar esa taxonomia por alcance en el inventory agregado del runtime principal,
+  - y hacer que `report` y `revoke-device` compartan overlays distribuidos mas profundos hasta el nivel `target_scope_relation`.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Context/AuthenticationContext.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/AuthManager.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterRevokeDeviceCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthDomainModelTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+- Resultado:
+  - `AuthenticationContext` ahora publica `managementActorTargetScopeRelation()` y `managementActorTargetScopeReasonCode()` para distinguir `self_governed_*`, `direct_admin_*` y `delegated_admin_*` segun `all|sessions|trusted-devices`,
+  - `AuthManager::devices()` y `managedDevices()` ahora proyectan explicitamente `management_actor_target_scope_relation` y `management_actor_target_scope_reason_code` desde esa semantica compartida,
+  - `operational_response.authorization_mode_scope_policies` ahora puede descender hasta `target_scope_relation_policies`, y `distributed_guard_scope_decision` ya resuelve y audita tambien `actor_target_scope_relation` y `actor_target_scope_reason_code`,
+  - bajo `partial_visibility`, un delegado administrativo acotado al target `delegated_admin_sessions_scope_target` puede conservar `sessions_only` sin relajar el `deny_all` del target delegado pleno,
+  - y la suite valida dominio, reporte y mutacion remota para overlays profundos sin romper los denials distribuidos existentes.
+- Gap natural posterior:
+  - falta extender `target_scope_relation_policies` a mas combinaciones actor-target-scope y perfiles multi-nodo intermedios,
+  - falta enriquecer la guardia distribuida para escenarios graduales entre `recent_lag`, `partial_visibility` y `store_dropout`,
+  - y falta ampliar cobertura feature del runtime principal para estas nuevas taxonomias actor-target-scope en paths publicos.
+
+### DV-AUTH-070
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `48`, `49`
+- Alcance objetivo:
+  - convertir `recent_lag` en un perfil operativo realmente intermedio entre observacion pasiva, `partial_visibility` y `store_dropout`,
+  - ampliar overlays `actor-target-scope` dentro de la guardia distribuida sin romper la semantica ya compartida entre `report` y `revoke-device`,
+  - y endurecer la explicabilidad de los denials graduales por actor administrativo.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+- Resultado:
+  - `monitor_recent_lag` ya publica `authorization_mode_scope_policies` explicitas para `direct_admin`, `delegated_admin` y `none`,
+  - `recent_lag` ahora conserva `allow_all` para `direct_admin`, degrada `delegated_admin` a `sessions_only` y mantiene `deny_all` para actores no confiables,
+  - el árbol `delegated_admin -> delegated_support -> delegated_administrative_target -> target_scope_relation_policies` ya distingue al menos `delegated_admin_sessions_scope_target` y `delegated_admin_trusted_devices_scope_target`,
+  - `revoke-device` ahora permite `sessions` a un delegado acotado bajo `recent_lag`, pero puede bloquear `trusted-devices` del mismo perfil con motivos y `policy_reason_code` específicos,
+  - y la suite valida tanto la lectura del contrato publicado por `report` como el enforcement real del guard gradual.
+- Gap natural posterior:
+  - falta llevar esta taxonomia actor-target-scope a mas pruebas feature del runtime principal (`managedDevices()` y `revokeManagedDevice()`),
+  - falta endurecer politicas adicionales para perfiles como `concentrated` o variaciones mas finas derivadas de `store_assessments`,
+  - y falta enriquecer la observabilidad operativa para que el reporte resuma mejor que combinaciones actor-scope quedan degradadas en cada drift.
+
+### DV-AUTH-071
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `26`, `35`, `47`, `49`
+- Alcance objetivo:
+  - ampliar la cobertura feature del runtime principal para `managedDevices()` y `revokeManagedDevice()` sobre taxonomias `actor-target-scope`,
+  - fijar con pruebas HTTP reales la semantica `self_governed_*` y completar la proyeccion `direct_admin_*` en los payloads del runtime,
+  - y dejar mejor anclada la alineacion entre `AuthenticationContext`, `AuthManager` y los paths publicos del framework.
+- Evidencia principal:
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `AuthManagerTest` ahora fija explicitamente `direct_admin_full_scope_target` en `managedDevices()` para actores privilegiados sobre otra identidad,
+  - el runtime principal ya tiene cobertura feature especifica para `self_governed_sessions_scope_target` y `self_governed_trusted_devices_scope_target`,
+  - `revokeManagedDevice()` queda validado en escenarios self-governed parciales: puede revocar solo sesiones preservando trusted devices, o solo trusted devices preservando la sesion autenticada,
+  - y la serializacion HTTP del runtime expone de forma consistente `management_actor_target_scope_relation` y `management_actor_target_scope_reason_code` tanto para targets delegados como self-governed/direct admin.
+- Gap natural posterior:
+  - falta endurecer la guardia distribuida con perfiles adicionales derivados de `coordination_profile`, `store_assessments` y señales multi-store mas finas,
+  - falta enriquecer la observabilidad operativa para resumir mejor degradaciones activas por actor, target y scope,
+  - y falta seguir ampliando cobertura end-to-end entre runtime principal y tooling operativo distribuido.
+
+### DV-AUTH-072
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `48`, `49`
+- Alcance objetivo:
+  - endurecer la guardia distribuida con un perfil multi-store intermedio adicional derivado de `coordination_profile`,
+  - volver mas accionable la observabilidad operativa cuando la actividad luce concentrada pero no hay perdida dura de visibilidad,
+  - y mantener alineados `report` y `revoke-device` sobre la misma degradacion actor-target-scope.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+- Resultado:
+  - `multi_store_summary` ahora proyecta `top_recent_store_share_15m` y `activity_drift` puede distinguir explicitamente el perfil `concentrated_activity` cuando la coordinacion reciente luce concentrada sin caer en `recent_lag`, `partial_visibility` ni `store_dropout`,
+  - `operational_response` ya publica `observe_concentrated_activity`, `degraded_scope_profiles` y overlays graduales donde `direct_admin` conserva `allow_all`, `delegated_admin` baja a `sessions_only`, `delegated_support:self_governed` puede seguir en `allow_all` y actores no confiables quedan en `deny_all`,
+  - `revoke-device` consume esa misma semantica mediante `distributed_guard` y `distributed_guard_scope_decision`, permitiendo `trusted-devices` en el caso `self_governed` delegado y rechazando `all` sobre target delegado con `reason_code` y `policy_reason_code` coherentes,
+  - la salida verbose del reporte ahora resume tambien `degraded_scope_profiles`,
+  - y la validacion del corte quedo verde con `php -l`, `AuthSecurityCenterReportCommandTest` (`OK (11 tests, 361 assertions)`) y `AuthSecurityCenterRevokeDeviceCommandTest` (`OK (18 tests, 384 assertions)`).
+- Gap natural posterior:
+  - falta extender `target_scope_relation_policies` a mas combinaciones actor-target-scope para perfiles graduales distintos de `concentrated_activity`,
+  - falta llevar mas de esta semantica distribuida al runtime principal y a pruebas feature end-to-end,
+  - y falta enriquecer el reporte para resumir con mas precision que stores y targets explican cada degradacion gradual.
+
+### DV-AUTH-073
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `35`, `47`, `48`, `49`
+- Alcance objetivo:
+  - consolidar overlays graduales adicionales sobre `target_scope_relation_policies` para casos `self_governed_*`,
+  - ampliar la cobertura end-to-end del runtime principal para completar la taxonomia `self_governed_full/sessions/trusted-devices`,
+  - y enriquecer el reporte para resumir mejor la relacion entre stores objetivo y degradaciones activas.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `monitor_recent_lag` y `monitor_concentrated_activity` ahora descienden tambien hasta `self_governed_full_scope_target`, `self_governed_sessions_scope_target` y `self_governed_trusted_devices_scope_target`, con degradaciones mas precisas para actores delegados sobre su propio target,
+  - en `recent_lag`, el target `self_governed_trusted_devices_scope_target` queda bloqueado con `deny_all`, mientras en `concentrated_activity` ese mismo target puede conservar `trusted_devices_only` sin relajar otras combinaciones mas sensibles,
+  - `operational_response` ahora anexa `target_store_assessments` para resumir dentro de la misma respuesta que stores sostienen la degradacion activa junto con `target_store_fingerprints` y `degraded_scope_profiles`,
+  - `AuthManagerTest` ahora completa la cobertura feature del runtime principal para `self_governed_full_scope_target`, ademas de los casos parciales ya existentes,
+  - y la validacion del corte quedo verde con `php -l`, `AuthSecurityCenterReportCommandTest` (`OK (11 tests, 373 assertions)`), `AuthSecurityCenterRevokeDeviceCommandTest` (`OK (19 tests, 411 assertions)`) y `AuthManagerTest` (`OK (58 tests, 708 assertions)`).
+- Gap natural posterior:
+  - falta extender overlays graduales equivalentes a mas combinaciones `direct_admin_*` y `delegated_admin_full_scope_target`,
+  - falta seguir enriqueciendo la explicabilidad del reporte para correlacionar mejor target stores, drift y decisiones denegadas por tipo de mutacion,
+  - y falta tender un puente mas profundo entre la semantica distribuida del tooling operativo y otros paths publicos del runtime principal.
+
+### DV-AUTH-074
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `35`, `47`, `48`, `49`
+- Alcance objetivo:
+  - profundizar overlays graduales equivalentes sobre targets `direct_admin_*`,
+  - enriquecer la correlacion operativa entre `target_store_fingerprints`, `target_store_assessments`, drift y denials por tipo de mutacion,
+  - y seguir tendiendo puentes entre la semantica distribuida del tooling operativo y los paths publicos del runtime principal.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `partial_visibility`, `recent_lag` y `concentrated_activity` ahora bajan tambien hasta `direct_admin_full_scope_target`, `direct_admin_sessions_scope_target` y `direct_admin_trusted_devices_scope_target`, permitiendo que `distributed_guard_scope_decision` seleccione policies mas precisas para targets administrativos directos,
+  - `operational_response` ahora publica `mutation_scope_profiles`, correlacionando `all`, `sessions` y `trusted-devices` con `mutation_kind`, `reason_code`, `target_store_fingerprints` y `target_store_assessments`,
+  - el output verbose del reporte resume tambien `mutation_profiles` y `target_store_assessments`,
+  - `revoke-device` ya valida de forma explicita overlays directos parciales sobre `recent_lag`, `concentrated_activity` y `partial_visibility`, usando `policy_source=actor_target_scope_relation_scope_policy` cuando aplica,
+  - `AuthManagerTest` ahora incorpora cobertura feature para `direct_admin_sessions_scope_target` y `direct_admin_trusted_devices_scope_target`, completando el puente hacia `managedDevices()` y `revokeManagedDevice()` en paths publicos del runtime,
+  - y la validacion del corte quedo verde con `php -l`, `AuthSecurityCenterReportCommandTest` (`OK (11 tests, 387 assertions)`), `AuthSecurityCenterRevokeDeviceCommandTest` (`OK (21 tests, 446 assertions)`) y `AuthManagerTest` (`OK (59 tests, 724 assertions)`).
+- Gap natural posterior:
+  - falta extender overlays equivalentes a mas combinaciones `delegated_admin_full_scope_target` y otros casos graduales administrativos plenos,
+  - falta enriquecer todavia mas la correlacion entre drift, denials y audit/export operativo por tipo de mutacion,
+  - y falta seguir expandiendo la cobertura end-to-end del runtime principal hacia taxonomias actor-target-scope adicionales.
+
+### DV-AUTH-075
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `35`, `47`, `48`, `49`
+- Alcance objetivo:
+  - consolidar overlays especificos para `delegated_admin_full_scope_target` bajo `partial_visibility`, `recent_lag` y `concentrated_activity`,
+  - enriquecer la correlacion entre `mutation_scope_profiles`, audit/export y `distributed_guard_scope_decision` por tipo de mutacion,
+  - y seguir ampliando el puente end-to-end hacia el runtime principal para delegacion administrativa plena.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `partial_visibility`, `recent_lag` y `concentrated_activity` ahora bajan tambien hasta `delegated_admin_full_scope_target`, permitiendo que `distributed_guard_scope_decision` deje de caer en policies demasiado generales para delegacion administrativa plena,
+  - `longitudinal_metrics` y `store_cohorts` ahora agregan `mutation_kinds`, `distributed_guard_policy_sources`, `distributed_guard_policy_reason_codes` y `distributed_guard_reason_codes`, reforzando la trazabilidad entre audit log durable, drift observado y contratos de denial/allowance por mutacion,
+  - `mutation_scope_profiles` ahora publica tambien `response_mode`, `escalation_level` y `policy_source=global_scope_policy`, aclarando que el perfil exportado es el contrato operativo global del reporte,
+  - `AuthSecurityCenterRevokeDeviceCommandTest` ahora cubre el overlay especifico de `delegated_admin_full_scope_target` en `partial_visibility`, `recent_lag` y `concentrated_activity`,
+  - `AuthManagerTest` ahora valida end-to-end que un actor `delegated_admin_full_scope_target` no solo descubre el ownership proyectado, sino que tambien puede ejecutar `revokeManagedDevice()` sobre el target remoto en el runtime principal,
+  - y la validacion del corte quedo verde con `php -l`, `AuthSecurityCenterReportCommandTest` (`OK (11 tests, 403 assertions)`), `AuthSecurityCenterRevokeDeviceCommandTest` (`OK (22 tests, 472 assertions)`) y `AuthManagerTest` (`OK (59 tests, 732 assertions)`).
+- Gap natural posterior:
+  - falta enriquecer `mutation_scope_profiles` con vistas mas actor-aware para explicar mejor como cambian los overlays por `authorization_mode`, privilegio y target relation sin depender solo del audit log,
+  - falta profundizar la correlacion por cohorte/store entre drift, `policy_source`, `policy_reason_code`, `reason_code` y export durable,
+  - y falta seguir expandiendo la cobertura end-to-end del runtime principal hacia taxonomias actor-target-scope administrativas adicionales.
+
+### DV-AUTH-076
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `35`, `48`, `49`
+- Alcance objetivo:
+  - volver actor-aware la observabilidad de mutacion dentro de `auth:security-center:report`,
+  - correlacionar `mutation_actor_profiles`, `actor_aware_profiles` y `observed_actor_profiles` con `store_cohorts` y drift distribuido,
+  - y endurecer ese contrato de explicabilidad sin cambiar el enforcement actual de `revoke-device` ni el runtime principal.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `longitudinal_metrics` ahora agrega `mutation_actor_profiles`, permitiendo resumir por mutacion, `scope`, `authorization_mode`, privilegio, relacion actor-target, `policy_source`, `policy_reason_code`, `reason_code`, store observado y outcome real,
+  - cada `store_cohort` ahora publica tambien sus propios `mutation_actor_profiles`, reforzando la lectura longitudinal por fingerprint/topologia sin perder el contexto actor-aware,
+  - `mutation_scope_profiles` ahora distingue `actor_aware_profiles` derivados del contrato de policy y `observed_actor_profiles` derivados del audit trail durable, de modo que el reporte compara la policy vigente contra el comportamiento administrativo observado,
+  - `activity_drift` y `operational_response` conservan el mismo enforcement runtime, pero ahora cargan una correlacion actor-aware mas rica dentro del contrato exportado del reporte,
+  - las pruebas del reporte dejaron de depender del orden posicional de `actor_aware_profiles`, fijando el contrato por identidad semantica del perfil,
+  - y la validacion del corte quedo verde con `AuthSecurityCenterReportCommandTest` (`OK (11 tests, 422 assertions)`), `AuthSecurityCenterRevokeDeviceCommandTest` (`OK (22 tests, 472 assertions)`) y `AuthManagerTest` (`OK (59 tests, 732 assertions)`).
+- Gap natural posterior:
+  - falta correlacionar mejor cuando distintas cohortes, stores o recursos afectados convergen en la misma `policy_source` actor-aware pero divergen en `target_store_assessments` y denials concretos,
+  - falta extender esa explicabilidad cruzada hacia export y enforcement cuando el drift multi-store degrada solo un subconjunto de recursos o mutaciones afectadas,
+  - y falta seguir ampliando la cobertura end-to-end del runtime principal hacia taxonomias actor-target-scope y degradaciones parciales adicionales.
+
+### DV-AUTH-077
+
+- Estado: `Implementado`
+- Bloque documental relacionado: `24`, `25`, `26`, `35`, `48`, `49`
+- Alcance objetivo:
+  - correlacionar el contrato actor-aware del `report` con el recurso realmente afectado por cada mutacion observada,
+  - distinguir dentro de cada `mutation_scope_profile` cuando la cobertura observada solo alcanza un subconjunto de los recursos esperados bajo drift parcial,
+  - y mantener intacto el enforcement actual del `revoke-device` y del runtime principal.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Console/Commands/AuthSecurityCenterReportCommand.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterReportCommandTest.php`
+  - `vendor/voltstack/framework/tests/Unit/AuthSecurityCenterRevokeDeviceCommandTest.php`
+  - `vendor/voltstack/framework/tests/Feature/AuthManagerTest.php`
+- Resultado:
+  - `mutation_actor_profiles` y sus cohortes ahora agregan `affected_resources` y `affected_resource_kinds`, de modo que el reporte ya no solo resume policy y actor-target-scope, sino tambien que tipo de recurso fue realmente impactado,
+  - cada `mutation_scope_profile` ahora publica `resource_coverage`, separando `targeted_resource_kinds`, `observed_affected_resources`, `observed_affected_resource_kinds`, `missing_targeted_resource_kinds` y el flag `has_partial_observed_resource_coverage`,
+  - ese mismo `resource_coverage` ahora resume `target_store_statuses`, `degraded_target_store_fingerprints` y `has_degraded_target_stores`, aclarando cuando la degradacion multi-store recae sobre stores concretos mientras la mutacion observada solo afecta una parte del recurso esperado,
+  - la suite del reporte ahora fija tanto la correlacion por recurso afectado en `mutation_actor_profiles` como la deteccion de cobertura parcial dentro de `partial_visibility`,
+  - y la validacion del corte quedo verde con `AuthSecurityCenterReportCommandTest` (`OK (11 tests, 440 assertions)`), `AuthSecurityCenterRevokeDeviceCommandTest` (`OK (22 tests, 472 assertions)`) y `AuthManagerTest` (`OK (59 tests, 732 assertions)`).
+- Gap natural posterior:
+  - falta llevar esta trazabilidad por subconjunto afectado hasta `--export-log` y `--audit-log` para que snapshots y auditoria durable publiquen el mismo lenguaje de `resource_coverage`,
+  - falta correlacionar mejor `report` y `revoke-device` cuando un denial operativo afecta solo parte del set objetivo o cuando diferentes stores sostienen distintos subconjuntos del impacto esperado,
+  - y falta seguir ampliando la cobertura end-to-end del runtime principal hacia degradaciones parciales administrativas adicionales.
 
 ## Estado consolidado del sistema Authentication
 
