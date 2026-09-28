@@ -572,7 +572,115 @@ Una fase se considera realmente cerrada solo si:
 
 ## Siguiente corte recomendado
 
-El siguiente corte de implementacion recomendado es `DV-AUTH-078`.
+El siguiente corte de implementacion recomendado es `DV-AUTH-083`.
+
+### DV-AUTH-083
+
+Alcance sugerido:
+
+- **Passkeys FIDO2 criptográfico real**: sustituir @internal simulated shells por verifyAttestation/verifyAssertion WebAuthn (packed/tpm ES256 RS256 COSE keys), storage durable encryption-at-rest credenciales, PasskeyAuthenticator nuevo CompositeAuthenticatorResolver candidate.
+- **OIDC criptográfico real**: JWKS fetch HTTP cache TTL 3600s (guzzle/curl vanilla), signature verification openssl JWT RS256/ES256 sobre JWKS n+e modulus exponent, clock_skew_leeway configurable, nonce binding replay protection, PKCE S256 flow code, state=CSRF-binding nonce-session.
+- **Bearer Token V2 rotation**: refresh→new access+refresh pareja one-time use invalidation, family token reuse detection invalida toda la familia si reutilizas refresh padre, introspection endpoint (active/expired/revoked scopes client_metadata device_ref).
+- **Throttle V2 distributed counters**: persistence pluggable Redis/database, cross-instance sync lockout propagation thresholds operation-type login/stepup/resets, HTTP 429 Retry-After mapping, risk integration throttle deny → risk_score +20.
+- **Risk V2 adaptive deny policies**: auth.risk.deny_threshold=critical/high auto deny 403, risk.step_up_threshold=medium StepUpRequired assurance, signals pluggables, durable history patterns → level critical map min_assurance=HighestPasskey.
+- **Assurance V2 orchestrator hooks**: comprobar min_assurance_operation preAuth hook actual<required → 423 assurance_insufficient envelope, CompositeAuthenticatorResolver aggregated amr fusion dedup, auth.assurance_insufficient coherent AuthenticationStrength middleware.
+
+Entregables minimos:
+
+1. PasskeyRegistrationCeremony.verifyAttestation() real + PasskeyAssertionCeremony.verifyAssertion() real (openssl, COSE ES256/RS256), PasskeyAuthenticator nuevo candidate priority 900, storage durable credenciales, 10 tests passkeys new cripto.
+2. OidcIdentityTokenValidator.validateAllSignature() real RS256/ES256 sobre JWKS n+e kid match, fetch HTTP real JWKS con cache TTL, OidcAuthenticator nuevo candidate authorization code callback flow, 10 tests OIDC new signature validation.
+3. BearerTokenService.rotateRefresh() emit new pareja, refresh one-time consume flag + family_id reuse detection invalidar descendencia bulk, 8 tests bearer rotation + reuse detection.
+4. Throttle V2 mapping 429 Retry-After en AuthExceptionMapper, storage pluggable distributed counters, 6 tests Throttle V2 HTTP 429 response.
+5. Risk V2 adaptive deny threshold configurable + mapping StepUp/assurance min, 6 tests Risk V2 threshold deny.
+6. Assurance V2 Orchestrator hooks: min_assurance_operation check preAuth, return StepUpRequired/423 envelope, auth.assurance_insufficient middleware, 6 tests Assurance V2 triggers.
+7. SP wiring DI: 3 interfaces nuevas passkey/oidc/throttleV2 bindings con default return null config disabled flags (auth.passkeys.enabled default false; auth.oidc.enabled default false; auth.throttle.distributed.enabled default false).
+
+Resultado esperado:
+
+- Authentication subsistema V1 completo: password auth, session auth, trusted device MFA, bearer tokens opaque V2, passkeys FIDO2 criptográficamente validos, OIDC federated criptográficamente validos, throttle distributed, risk adaptive, assurance min triggers orchestrator.
+- 7 bloques del slice 082 (A-G) completados con criptografía real, no skeleton shells simulated.
+- Cross-suite AUTH ≥ 240 tests exit 0, baseline 216 tests 082 intacto sin regresiones.
+- Docs 4 actualizados cierre 083.
+
+## Cortes recomendados previos
+
+### DV-AUTH-082
+
+Alcance sugerido:
+
+- Bloque A gobernanza distribuida passwords: DistributedPasswordGovernanceProviderInterface, PasswordRotationReceipt, RetentionTieredEnforcer 3-tier, LocalIdentityProvider implements via updateEntry(), 3 gates PasswordAuthenticator.
+- Bloque B Throttling V1: AbuseProtectionThrottleInterface decide/recordAttempt, BruteForceCounter sliding 1m/5m/15m, CredentialStuffingBloomFilter 40 passwords, ThrottleEngineV1 umbrales identifier×1 / device×1.5 / ip×2, Orchestrator preAuth hook.
+- Bloque C Risk Signal V1: RiskScore enum low/medium/high/critical cap100, 4 signals (NewDevice +25 / IpDrift +15 / ImpossibleTravel +40 / IrregularTime +10), CompositeRiskSignalEngine suma cap100, Orchestrator postAuth metadata SIN deny V1.
+- Bloque D Assurance composable: AuthenticationMethodReferenceList dedup amr, AssuranceProfile int enum 0-7 (Lowest→HighestPasskey), StepUpRequirement required/not VO, AssuranceStepUpEvaluator min_assurance operation, AuthenticationAssurance composeFromAmr / meetsMinimumAssurance sin modificar código existente.
+- Bloque E Nonce + CSRF Binding: TransactionNonceStoreInterface issue/validate, NonceRecord/NonceValidationResult VOs, CsrfChallengeBinder HKDF deterministic, InMemoryTransactionNonceStore one-time correct purge order (check exist → check individual expiry → purge global distingue expired vs consumed), Orchestrator preAuth Nonce validate ANTES throttle, postAuth issue nonce+CSRF metadata.
+- Bloque F Passkeys Skeleton V1 simulated: RelyingPartyConfig/PasskeyCredentialRecord fromArray/toArray, PasskeyCredentialStoreInterface/InMemoryPasskeyCredentialStore, PasskeyRegistrationCeremony @internal beginChallenge simulated 64hex, PasskeyAssertionCeremony @internal verifyAssertion simulated sin crypto.
+- Bloque G OIDC Skeleton V1 simulated: OidcWellKnownClientInterface/OidcJwksCacheInterface contracts, OidcProviderMetadata + InMemoryMockOidcWellKnownClient hardcodeado sin HTTP fetch, InMemoryOidcJwksCache TTL naive, OidcIdentityTokenValidator shell 6 structural checks (iss/aud/exp/nonce/azp/at_hash) SIN crypto, FederatedClaimsMapper email_verified=true→Active / false→Suspended heurística.
+- H1 cross-suite completa ≥ 192 tests AUTH exit 0; H2 actualizar 4 docs AUTHENTICATION DEVELOPMENT.
+
+Resultado alcanzado (exit 0, 216 tests ≥ 192 objetivo, 2713 assertions, baseline 081 intacto):
+
+- Bloques A-G implementados + unit tests 10+10+8+8+8+6+6 = 56 unit nuevos verified 100% BloqueXTest exit 0 cada uno.
+- Unit AUTH total 143 tests + Feature AuthManagerTest 61/61 + SkeletonSecuritySmokeTest 12/12 = 216 tests AUTH exit 0, baseline 136 tests 081 intacto sin regresiones.
+- Orchestrator rama 1-candidate 100% intacta (if ($tried === 1) return $firstDecision; SIN mods), hooks preAuth (Nonce→Throttle) y postAuth (Risk→Nonce+CSRF) envueltos FUERA de la rama backward compat.
+- Backward compat layered OPT-IN 100%: 4 interfaces nuevas = instanceof checks; config flags throttle/risk/transaction.nonce enabled = default false; constructor Orchestrator 4 args nuevos nullable = null default; metadata nueva = array_filter eliminando nulls.
+- SP DI FIX crítico: eliminar bound() inexistente → bindings DIRECTOS scoped interfaces 2 (AbuseProtectionThrottleInterface / TransactionNonceStoreInterface) retorna null cuando config disabled; VoltStack Container NO respeta = null default type-hints interfaces, binding DEBE existir siempre.
+- Reglas permanentes STANDING RULE preservadas: actor_target_scope_relation clave no índice posicional; distributed_guard_denied matched_resources>0 affected=0; delegated-target-protected middleware('auth') 401 post-revocación.
+
+Gap natural posterior (083):
+
+- reemplazar skeletons simulated shells con validación criptográfica real (passkeys attestation/assertion WebAuthn openssl COSE, OIDC JWT signature JWKS fetch HTTP real),
+- bearer token V2 rotation pareja one-time + family reuse detection,
+- throttle V2 distributed counters persistence pluggable Redis/database + HTTP 429 mapping Retry-After,
+- risk V2 adaptive deny thresholds configurable auto deny 403 / step_up_required,
+- assurance V2 orchestrator hooks preAuth comprobar min_assurance_operation actual < required → 423 assurance_insufficient envelope.
+
+### DV-AUTH-080
+
+Alcance sugerido:
+
+- introducir aserciones de test explicitas sobre el nuevo envelope estructurado de rechazo (correlation_id, operation_id, result, reason_code, 12-clave resource_coverage) en todas las ramas de validacion temprana y authorization_failed, tanto en salida JSON como en eventos JSONL de --audit-log
+- ampliar cobertura E2E del runtime principal con taxonomias actor-target-scope administrativas adicionales y escenarios de degradacion parcial distribuida variada en managedDevices() y revokeManagedDevice()
+- construir un harness formal de snapshots/export long-form para validar --export-log y --audit-log con trazabilidad de envelopes completos a traves del tiempo, correlacionando correlation_id y operation_id entre reporte, auditoria y mutacion operativa
+
+Entregables minimos:
+
+1. extender AuthSecurityCenterRevokeDeviceCommandTest con casos explicitos que validen presencia y forma correcta de correlation_id, operation_id, result, reason_code y las 12 claves de resource_coverage en la salida JSON Y en los eventos JSONL de --audit-log, cubriendo las 6 ramas de rechazo (5 validaciones tempranas + authorization_failed).
+2. ampliar AuthManagerTest con casos feature adicionales que fijen taxonomias actor-target-scope administrativas mas variadas (mas overlays delegated_admin_*, direct_admin_*, self_governed_*) bajo combinaciones distintas de drift operativo (recent_lag, partial_visibility, concentrated_activity), escenarios de degradacion parcial distribuida y coverage de scope sessions|trusted-devices|all en managedDevices() y revokeManagedDevice().
+3. construir un harness de snapshots/export long-form que valide --export-log y --audit-log con trazabilidad completa: correlacion cruzada de correlation_id y operation_id entre reporte, auditoria durable y salida de mutacion; preservacion de resource_coverage completo con matched_resources vs affected_resources a traves del tiempo; y conservacion de actor_aware_profiles / mutation_actor_profiles con ordenacion estable desacoplada de indice posicional.
+4. mantener un policy/runtime compartido mas expresivo entre AuthenticationContext, AuthManager, report y revoke-device; conservar nomenclatura unificada sin regresar a claves legacy observed_affected_*; y mantener AuthManagerTest verde sin regresiones (59 tests / 732 assertions minimo).
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados, directos, multi-nodo, ordenacion estable de perfiles y degradaciones graduales adicionales; introducir variaciones de provider local con enriquecimiento persistente para validar escenarios multi-fuente.
+6. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery; explorar retencion segmentada por tipo de outcome operativo; y seguir evolucionando el provider local hacia fuentes persistentes mas ricas con enrichment local durable para actor-aware profiles.
+
+Resultado real (evidencia):
+
+- Suite `AuthSecurityCenterRevokeDeviceCommandTest` verde: **27 tests / 811 assertions**. Incluye 2 tests authorization_failed extendidos (L1077-1257) y 5 tests validation_failed NUEVOS (L1259-1631: missing_identity, missing_device_reference, missing_actor_identity, missing_actor_session_public_id, invalid_scope), cada uno con envelope JSON + JSONL de 12 claves resource_coverage + correlation_id/operation_id cross-check.
+- Suite `AuthManagerTest` verde: **60 tests / 773 assertions**. Incluye 1 test E2E NUEVO `test_auth_manager_managed_devices_handles_multiple_target_devices_and_scopes_for_delegated_admin` (L4863-L5123, 41 assertions): 3 identidades (target-A MFA 2 devices, target-B MFA 1 device trusted, delegated_admin full_scope), 4 logins, inventario multi-identidad, 3 operaciones revoke por scope granular (sessions / trusted-devices / all) y 4 endpoints protegidos validando 401/200 post-revocation.
+- Suite `AuthSecurityCenterReportCommandTest` verde: **12 tests / 524 assertions**. Incluye 1 harness NUEVO snapshots/export long-form (L994-L1451, 81 assertions): 6 eventos custom audit-log con 6 outcomes distintos (executed sessions/trusted/all + validation_failed + authorization_failed + distributed_guard_denied), correlation_id cross report ↔ export ↔ audit source, matched_total=10 sessions=6 trusted=4, affected_total=5 sessions=3 trusted=2, matched_resources propagados por time_windows / store_time_windows / store_cohorts / mutation_actor_profiles / mutation_scope_profiles con perfiles filtrados por clave (no indice posicional).
+- Suites combinadas framework: **99 tests / 2108 assertions exit 0** sin regresiones.
+- El contrato unificado de envelopes estructurados de rechazo queda fijado mediante aserciones explicitas, la taxonomia actor-target-scope administrativa multi-identity multi-login multi-scope queda mejor cubierta y el harness longitudinal habilita validacion durable reproducible.
+
+### DV-AUTH-079
+
+Alcance sugerido:
+
+- normalizar `resource_coverage` y envelopes de subconjunto afectado en todas las ramas JSON y JSONL de rechazo, decision y ejecucion operativa
+- reforzar la trazabilidad cruzada entre `report`, export, audit trail durable y `revoke-device` cuando un mismo subconjunto de recursos atraviesa outcomes distintos
+- seguir ampliando la cobertura end-to-end del runtime principal para taxonomias actor-target-scope administrativas adicionales y degradaciones parciales distribuidas
+
+Entregables minimos:
+
+1. extender `revoke-device`, `--audit-log` y envelopes de rechazo para publicar siempre el mismo lenguaje de `resource_coverage`, recursos candidatos y recursos efectivamente afectados.
+2. reforzar `longitudinal_metrics`, `store_cohorts`, export y auditoria durable para correlacionar mejor outcomes distintos sobre un mismo subconjunto de recursos y stores degradados.
+3. ampliar `revoke-device` y la suite feature del runtime principal con escenarios adicionales que fijen esas taxonomias actor-target-scope, outcomes y degradaciones parciales en `managedDevices()` y `revokeManagedDevice()`.
+4. mantener un policy/runtime compartido mas expresivo entre `AuthenticationContext`, `AuthManager`, `report` y `revoke-device`.
+5. ampliar pruebas de integracion y hardening sobre escenarios delegados, directos, multi-nodo, ordenacion estable de perfiles y degradaciones parciales adicionales.
+6. seguir evolucionando el provider local hacia fuentes persistentes mas ricas.
+
+Resultado esperado:
+
+- el flujo password + session conserva la semantica gradual ya introducida, pero con una correlacion mas rica entre drift, subconjuntos afectados, cohortes distribuidas, mutacion y outcomes operativos compartidos entre reporte y auditoria,
+- Authentication queda mejor posicionado para adopcion real dentro del framework,
+- y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 
 ### DV-AUTH-078
 
@@ -597,7 +705,6 @@ Resultado esperado:
 - Authentication queda mejor posicionado para adopcion real dentro del framework,
 - y el subsistema puede crecer hacia MFA, tokens y federation sin rehacer el nucleo.
 
-## Cortes recomendados previos
 ### DV-AUTH-077
 
 Alcance sugerido:

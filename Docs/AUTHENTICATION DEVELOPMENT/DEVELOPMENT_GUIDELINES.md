@@ -330,24 +330,50 @@ No continuar el desarrollo del sistema con estos patrones:
 
 ### Fase sugerida inmediata
 
-`DV-AUTH-078: Trazabilidad Cruzada De Resource Coverage En Report, Export Y Revoke-Device`
+`DV-AUTH-083: Passkeys FIDO2 Validacion Criptografica Real Attestation/Assertion Ceremonies + OIDC Validacion Criptografica Real Signature RS256/ES256 JWKS Cache HTTP Fetch Real + Bearer Token Rotation Access/Refresh Pair + Family Reuse Detection Refresh One Time + Throttle V2 Distributed Counters Persistence + Risk V2 Adaptive Deny Policies Mapping Assurance Step Up + Assurance V2 Orchestrator Hooks Denial Step_Up_Required Triggers`
 
 Documentos objetivo:
 
-- `24_AUDIT_OBSERVABILITY_LOGGING_METRICS_TRACING_AND_EXPLAINABILITY.md`
-- `25_FAILURE_ERROR_EXCEPTION_DENIAL_AND_SECURITY_RESPONSE_HANDLING.md`
-- `26_TESTING_VERIFICATION_SECURITY_ASSURANCE_AND_CONFORMANCE.md`
-- `35_SESSION_DEVICE_CREDENTIAL_INVENTORY_SECURITY_CENTER_AND_USER_SECURITY_MANAGEMENT.md`
+- `11_PASSWORD_AUTHENTICATION_HASHING_POLICY_AND_CREDENTIAL_LIFECYCLE.md`
+- `14_TOKEN_BEARER_API_AND_STATELESS_AUTHENTICATION.md`
+- `16_PASSKEY_WEBAUTHN_FIDO2_AND_PHISHING_RESISTANT_AUTHENTICATION.md`
+- `17_OAUTH2_OPENID_CONNECT_SOCIAL_LOGIN_AND_FEDERATED_AUTHENTICATION.md`
+- `19_THROTTLING_RATE_LIMITING_BRUTE_FORCE_CREDENTIAL_STUFFING_AND_ABUSE_PROTECTION.md`
+- `20_RISK_ENGINE_ADAPTIVE_AUTHENTICATION_AND_SECURITY_SIGNAL.md`
+- `37_ASSURANCE_LEVEL_AUTHENTICATION_CONTEXT_AND_TRUST_CLASSIFICATION.md`
+- `39_TRANSACTION_STATE_NONCE_REPLAY_PROTECTION_CSRF_BINDING_AND_CRYPTOGRAPHIC_CONTINUATION_SECURITY.md`
+- `41_IDENTITY_LIFECYCLE_ACCOUNT_STATE_SUSPENSION_LOCKOUT_DEACTIVATION_DELETION_AND_REACTIVATION.md`
+- `42_PRIVACY_DATA_MINIMIZATION_RETENTION_CONSENT_AND_SECURITY_METADATA_GOVERNANCE.md`
 - `47_AUTHENTICATION_DEVELOPER_EXPERIENCE_FACADE_HELPER_CONFIGURATION_BOOTSTRAP_AND_APPLICATION_INTEGRATION_SYSTEM.md`
-- `48_ADMINISTRATION_OPERATIONAL_TOOLING_DIAGNOSTICS_SECURITY_OPERATIONS_AND_PRODUCTION_MANAGEMENT.md`
-- `49_AUTHENTICATION_REFERENCE_IMPLEMENTATION_DEFAULT_COMPONENTS_SECURE_DEFAULTS_AND_FRAMEWORK_INTEGRATION_SYSTEM.md`
+- `50_CROSSCUTTING_CONCERNS_GOVERNANCE_COMPLIANCE_AUDIT_AND_SECURITY_ASSURANCE_VALIDATION.md`
 
 ### Entregables minimos sugeridos
 
-1. llevar `resource_coverage`, `affected_resource_kinds` y la nocion de subconjunto afectado a `--export-log`, `--audit-log` y `revoke-device` para que reportes, snapshots y auditoria durable hablen el mismo lenguaje.
-2. reforzar la trazabilidad cruzada entre `report`, `--export-log`, `--audit-log-source` y `revoke-device` para explicar mejor que store, cohorte o subconjunto de recursos sostiene cada denial o allowance bajo drift parcial.
-3. seguir llevando esta semantica distribuida al runtime principal mediante cobertura end-to-end adicional en `managedDevices()` y `revokeManagedDevice()`, especialmente para degradaciones parciales adicionales y taxonomias administrativas aun no fijadas en feature tests.
-4. conservar la alineacion profunda de `AuthenticationContext`, runtime principal, comandos operativos y Controllers Security.
-5. ampliar la suite de pruebas de integracion del flujo endurecido con casos directos, delegados, multi-nodo, ordenacion estable de perfiles y degradaciones graduales adicionales.
-6. seguir endureciendo limpieza y retencion gobernada de tombstones de recovery.
-7. seguir preparando la base para stores persistentes adicionales del provider local o providers mutables mas ricos.
+1. validación criptográfica REAL passkeys FIDO2: PasskeyRegistrationCeremony verifyAttestation (packed/tpm android-safety-net attestation formats), PasskeyAssertionCeremony verifyAssertion (ES256/RS256 COSE public keys signature counter increment persistent), expectedRpId expectedOrigin expectedUserHandle flags UP/UV user present/verified, storage durable y storage encryption at rest; PasskeyAuthenticator como nuevo candidato CompositeAuthenticatorResolver (priority 900) assertion flow; denials explícitos passkey (credential_not_found, invalid_signature, user_not_verified) en AuthExceptionMapper.
+2. validación criptográfica REAL OIDC: JWKS fetch HTTP con refresh TTL estricto cache (default 3600s), signature verification JWT openssl real RS256/ES256 usando n+e JWKS modulus exponent kid match, clock_skew_leeway configurable (default 30s), iss whitelist, aud whitelist, nonce binding replay protection nonce_store, PKCE S256 code_verifier code_challenge authorization code flow, state parameter CSRF binding nonce + session one-time use; OidcAuthenticator como nuevo candidato CompositeAuthenticatorResolver authorization code callback endpoint login autenticado federado.
+3. bearer token rotation V2: refresh→new access+refresh pareja emitido, refresh one-time use invalida el refresh actual al usarse, family token reuse detection (reutilizas refresh padre invalida toda la descendencia family_ids), introspection endpoint (active/expired/revoked scopes client_metadata device_ref); denials token_expired/token_revoked/token_invalid HTTP 401 + headers
+4. throttle V2 distributed: persistence pluggable Redis/database BruteForceCounter cross-instance sync, ventanas sliding precision real timestamps, thresholds operation type (login / stepup / password-reset / oidc-callback) rate configurables, mapping ThrottleDeniedException → HTTP 429 Too Many Requests Retry-After en AuthExceptionMapper, risk integration (throttle deny → risk_score +20)
+5. risk V2 adaptive deny: config auth.risk.deny_threshold=critical/high auto deny (AuthExceptionMapper 403), risk.step_up_threshold=medium retorna StepUpRequired assurance step-up, signals pluggables (provider interface, config declarado), history storage durable device_ref identity patterns cross-instance, risk→assurance mapping level critical → min_assurance=HighestPasskey
+6. assurance V2 orchestrator hooks: Orchestrator preAuth hooks comprobar min_assurance_operation, si actual < required retorna StepUpRequirement + 423 reason_code=assurance_insufficient envelope, CompositeAuthenticatorResolver aggregated amr fusion dedup, denials auth.assurance_insufficient coherente AuthenticationStrength middleware auth
+7. DI container VoltStack hard constraint wiring: SIEMPRE registrar binding directo `scoped(Interface, closure)` para type-hints de interfaces en constructores de clases resolubles SP, closure retorna null por defecto cuando config flag disabled; NUNCA usar condicional `bound()` inexistente API Application/Container public. BACKWARD COMPAT 100%: config flags default false, nullable constructor args, instanceof checks antes invocar interface methods.
+
+### Lecciones aprendidas (DV-AUTH-081, DV-AUTH-082) — prioridad 2 (structural)
+
+1. **Lección A - Container VoltStack no respeta `= null` default para type-hints de INTERFAZ en constructores**: cuando una clase se resuelve via ServiceProvider Container, los type-hints de interfaces en constructor SIN binding registrado lanzan BindingResolutionException incluso aunque el PHP declare `?Interfaz = null`. Regla permanente: CADA interfaz nueva que sea type-hint constructor de resolubles SP DEBE tener binding scoped/bind registrado siempre con default return null si config disabled.
+2. **Lección B - `Application::bound()` NO EXISTE en API público VoltStack Container**: no existe método bound() / hasBinding() / resolved() para validar binding duplicado; interfaces nuevas de un slice propio (082 throttle/nonce) son NUEVAS en el framework (ningún otro SP las registra) → registrar siempre binding DIRECTO sin condicional.
+3. **Lección C - Nonce one-time purge order distingue expired vs consumed**: en InMemoryTransactionNonceStore, purgeExpired() NO DEBE ejecutarse antes de chequear existencia record porque elimina records expirados primero → luego check isset() retorna false y el test consume nonce vs expired retorna status ambiguo. Orden correcto: (1) check empty nonce, (2) check record existe, (3) check individual expiry ANTES de purge global, (4) purge después del chequeo.
+4. **Lección D - Layered OPT-IN backward compat = baseline 100% intacto sin conditional hell**: interfaces nuevas = instanceof checks ANTES invocar métodos; constructor args nuevas = nullable = null default; config flags enabled = default false; metadata nueva = array_filter eliminando nulls para no romper envelopes existentes.
+5. **Lección E - Orchestrator rama 1-candidate = SAGRADA backward compat**: hooks preAuth/postAuth nuevos DEBEN envolverse FUERA de la rama `if ($tried === 1 && $firstDecision !== null) return $firstDecision;`. NUNCA modificar esa rama; 1-solo-candidato retorna Decision literalmente ORIGINAL authenticator sin aggregated metadata, sin exception message modifications.
+6. **Lección F - Librerías externas PROHIBIDAS default**: si plan indica "sin composer dependencias", @internal skeleton simulated shells classes que devuelven resultados hardcodeados sin crypto real + @todo 083 para implementación real. Passkeys/OIDC V1 = skeleton, V2 = crypto real.
+7. **Lección G - Definition of Done cross-suite = H1 Unit AUTH + H1 Feature AUTH exit 0 antes docs**: docs ACTUALIZAR SOLO DESPUÉS cross-suite completa exit 0, nunca antes; si suite Unit 70 green pero Feature AuthManager/SkeletonSmoke BLOCKED por error SP → fix SP primero, nunca cerrar docs con errores de regresión.
+
+### Lecciones adicionales (DV-AUTH-082) — prioridad 3 (avanzado)
+
+1. Risk V1 = metadata SOLO, no denegación automática: V1 es observabilidad, V2 es enforcement. Nunca denegar en V1 sin config explícito de umbrales.
+2. Throttle stuffing bloom 40 passwords naive = OK V1; V2 requiere bloom filter con false positive rate < 1% y contraseñas comprometidas reales (rockyou sample).
+3. HKDF deterministic CSRF binding challenge: info=device_ref parametro unique por dispositivo asegura que mismo nonce en otro device_ref retorna challenge distinto; perfecto 2-party binding.
+4. FederatedClaimsMapper heurística simple: email_verified = true → Active + claims normalizados; cuando validador criptográfico real V2 esté listo, mapear claims más ricos (amr, acr, auth_time → security state reason).
+5. RetentionTieredEnforcer medium tier 180 días = umbral exacto para BloqueATest #5 assertion; actualizar siempre assertions cuando cambien thresholds constants (no hardcode en tests, usar constants).
+6. PasskeyRegistrationCeremony.beginChallenge() = 64 chars hex; BloqueFTest #4 assertion strlen === 64 exacto. Si cambias longitud nonce, sincroniza assertions.
+7. OidcValidator validateAll shell V1 6 checks structuales: iss/aud/exp/nonce/azp/at_hash presentes; criptografía real V2 agrega checks iss match aud match exact, exp>now, at_hash base64url leftmost hash, signature verificación openssl.
+8. Cache PHP process premature exit 637 tests Unit completo juntos: cuando ejecutes All Unit/Feature All-combined (637+ tests), puede haber timeout process PHP premature exit; ejecutar por grupos separados si pasa, cross-suite target es solo AUTH tests no todo el framework.
