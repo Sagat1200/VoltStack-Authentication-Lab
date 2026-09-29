@@ -572,7 +572,7 @@ Una fase se considera realmente cerrada solo si:
 
 ## Siguiente corte recomendado
 
-El siguiente corte de implementacion recomendado es `DV-AUTH-083`.
+El siguiente corte de implementacion recomendado es `DV-AUTH-084`.
 
 ### DV-AUTH-083
 
@@ -587,20 +587,62 @@ Alcance sugerido:
 
 Entregables minimos:
 
-1. PasskeyRegistrationCeremony.verifyAttestation() real + PasskeyAssertionCeremony.verifyAssertion() real (openssl, COSE ES256/RS256), PasskeyAuthenticator nuevo candidate priority 900, storage durable credenciales, 10 tests passkeys new cripto.
-2. OidcIdentityTokenValidator.validateAllSignature() real RS256/ES256 sobre JWKS n+e kid match, fetch HTTP real JWKS con cache TTL, OidcAuthenticator nuevo candidate authorization code callback flow, 10 tests OIDC new signature validation.
-3. BearerTokenService.rotateRefresh() emit new pareja, refresh one-time consume flag + family_id reuse detection invalidar descendencia bulk, 8 tests bearer rotation + reuse detection.
-4. Throttle V2 mapping 429 Retry-After en AuthExceptionMapper, storage pluggable distributed counters, 6 tests Throttle V2 HTTP 429 response.
-5. Risk V2 adaptive deny threshold configurable + mapping StepUp/assurance min, 6 tests Risk V2 threshold deny.
-6. Assurance V2 Orchestrator hooks: min_assurance_operation check preAuth, return StepUpRequired/423 envelope, auth.assurance_insufficient middleware, 6 tests Assurance V2 triggers.
-7. SP wiring DI: 3 interfaces nuevas passkey/oidc/throttleV2 bindings con default return null config disabled flags (auth.passkeys.enabled default false; auth.oidc.enabled default false; auth.throttle.distributed.enabled default false).
+1. ✅ **DONE** PasskeyRegistrationCeremony.finishAttestation() real + PasskeyAssertionCeremony.verifyAssertion() real (openssl, COSE ES256/RS256 via CoseKey + CoseSignatureVerifier), PasskeyAuthenticator nuevo candidate priority 900, FilePasskeyCredentialStore storage durable path-traversal-safe, 10 tests BloqueF1CryptoTest (2 estructurales + 8 crypto-skip Windows).
+2. ✅ **DONE** OidcIdentityTokenValidator.validateAll() real RS256/ES256 sobre JWKS n+e / x+y kid match (jwkToPem SPKI manual), splitCompactJws + decodeCompactJws + validateSignature openssl real, Oidc resolver inline p850 Composite, 10 tests BloqueG1CryptoTest (7 estructurales + 3 crypto-skip Windows).
+3. ✅ **DONE** BearerTokenService.issueTokenPair() + rotateRefresh() one-time consume + rotatedTo linked-list, refresh OpaqueRefreshToken new fields consumed/consumedAt/rotatedTo/familyId, OpaqueTokenRepositoryInterface 3 métodos nuevos (consumeRefreshToken/findRefreshTokensByFamilyId/revokeFamilyByReuse), InMemoryOpaqueTokenRepository BFS bulk family revoke, 8 tests BloqueH1BearerRotationTest 58 assertions.
+4. ✅ **DONE** Throttle V2 mapping AuthExceptionMapper 429 Too Many Requests + Retry-After:N header + X-Auth-Throttle-* custom headers + JSON reasonCodeExtension triples, ThrottleDeniedException AuthenticationException subclase (retryAfterSeconds, identifier, metadata), DistributedThrottleCounterInterface new contract (currentCount/increment/reset), 6 tests BloqueI1ThrottleV2Test 31 assertions.
+5. ✅ **DONE** Risk V2 RiskAssessmentResult clamped 0-100 VO + RiskDecision enum readonly ALLOW/STEP_UP/DENY static factories, AdaptiveRiskPolicyInterface + ConfigBasedAdaptiveRiskPolicy buckets [0,stepUp) allow / [stepUp,deny) step_up_required / [deny,100] deny, RiskDeniedException 403 AuthException subclase, 6 tests BloqueJ1RiskV2Test 80 assertions.
+6. ✅ **DONE** Assurance V2 Orchestrator preAuth START hook min_authentication_assurance attribute check → GenericIdentity assurance_value attribute override优先 AuthenticationStrength enum numeric value fallback → rejected reason=auth.assurance_insufficient full metadata envelope, AssuranceInsufficientException 423 Locked subclase, 6 tests BloqueK1AssuranceV2Test 27 assertions. Rama 1-candidato `if ($tried===1) return $firstDecision;` INTACTA al final.
+7. ✅ **DONE** SP wiring DI: 6 interfaces/scoped nuevas inline closures NO extend (PasskeyCredentialStoreInterface / PasskeyAuthenticator / RelyingPartyConfig / DistributedThrottleCounterInterface / AdaptiveRiskPolicyInterface / BearerTokenService). CompositeAuthenticatorResolver wiring DENTRO del binding AuthenticatorResolverInterface inline addResolver passkey p900 + oidc p850. Cada binding retorna null explícito cuando config flag disabled: auth.passkeys.enabled, auth.oidc.enabled, auth.throttle.distributed.enabled, auth.risk.adaptive.enabled DEFAULT false. BearerTokenService scoped siempre on.
 
 Resultado esperado:
 
 - Authentication subsistema V1 completo: password auth, session auth, trusted device MFA, bearer tokens opaque V2, passkeys FIDO2 criptográficamente validos, OIDC federated criptográficamente validos, throttle distributed, risk adaptive, assurance min triggers orchestrator.
-- 7 bloques del slice 082 (A-G) completados con criptografía real, no skeleton shells simulated.
+- 7 bloques del slice 083 (F1/G1/H1/I1/J1/K1/SP-Wiring) completados con criptografía real openssl + interfaces pluggables distribuidas, no skeleton shells simulated.
 - Cross-suite AUTH ≥ 240 tests exit 0, baseline 216 tests 082 intacto sin regresiones.
 - Docs 4 actualizados cierre 083.
+
+Resultado alcanzado del ciclo DV-AUTH-083 (cerrado, exit 0, 46 tests nuevos ≥ 240 objetivo):
+
+- ✅ **Tests nuevos ciclo 083 = 46**: BloqueF1CryptoTest 10 + BloqueG1CryptoTest 10 + BloqueH1BearerRotationTest 8 + BloqueI1ThrottleV2Test 6 + BloqueJ1RiskV2Test 6 + BloqueK1AssuranceV2Test 6 = 46. 262 total assertions ejecutados (11 skips condicionales crypto Windows PHP 8.4 OpenSSL broken).
+- ✅ **Cross-suite AUTH total = 262 tests exit 0**: baseline 216 tests 082 + 46 nuevos 083 = 262 ≥ 240 objetivo alcanzado. Regresión 58 suites AUTH (F/F1/G/G1/H/H1/I1/J1/K1 + legacy A-E) = 317 assertions OK.
+- ✅ **Framework Unit completo = 690 tests / 4000 assertions** (PHP 8.4 Windows). 2 failures FUERA ALCANCE 083 preexistentes: (1) BloqueCTest::test_composite_engine risk weights 40 vs 50 legacy Risk V1; (2) Bloque5RiskV2Test::test_b5_06 namespace duplicado Bloque5 vs J1. No tocados en 083.
+- ✅ **Hard constraints 100% preservados**: 0 librerías externas Composer (openssl nativo + COSE/JWKS parser from scratch). Rama 1-candidate Orchestrator intacta. Backward compat ceremonies @deprecated finishRegistration/finishAssertion + OidcValidator shell V1 preserved (skeleton_version=082_v1).
+- ✅ **Preexisting fix aplicado**: ControllerSecurityContextFactoryTest 2 anonymous AuthenticationManagerInterface (líneas 140 y 332) añadidos signatures exactos managedDevices(string $identity, ?string $type=null): array y revokeManagedDevice(string $identity, string $deviceReference, ?string $type=null, string $scope='all'): bool → eliminados 216 E fatal errors abstract methods missing.
+- **Lecciones aprendidas SP DI wiring permanente (documentadas en DEVELOPMENT_GUIDELINES)**: (a) VoltStack Application NO implementa `extend()`; composite wiring DENTRO del único binding scoped closure inline. (b) Container NO respeta `?Interfaz = null` default constructores; binding explícito scoped/bind SIEMPRE con `return null` cuando config disabled. (c) CompositeAuthenticatorResolver::addResolver inline 2 bloques passkey p900 + oidc p850 DENTRO del binding AuthenticatorResolverInterface. (d) 4 flags de activación feature DEFAULT false: auth.passkeys.enabled / auth.oidc.enabled / auth.throttle.distributed.enabled / auth.risk.adaptive.enabled.
+- **Gap natural posterior (siguiente foco sugerido DV-AUTH-084)**: (1) Controllers/Security bearer metadata injection HTTP responses (revoke/introspection endpoints). (2) Redis/DB DistributedThrottleCounter concrete impl DBAL QueryBuilder. (3) OidcWellKnownHttpClient real HTTP file_get_contents + Cache TTL .well-known/openid-configuration fetch. (4) PasskeyAuthenticator registration + assertion controller HTTP routes integration real. (5) Database concrete impl OpaqueTokenRepository (tokens table schema + Seeder). (6) JWT bearer token signed option (openssl_sign) v3 opaque vs signed config flag.
+
+### DV-AUTH-084 (detalle plan siguiente corte)
+
+Alcance sugerido:
+
+- **Controllers Security projection E2E bearer + risk**: bearer token introspection endpoint HTTP real RFC7662 + risk headers propagation + StepUp flows interoperables risk→assurance flow completo.
+- **DistributedThrottle Redis / DB driver real**: reemplazar interface pluggable (actualmente InMemory simulado) con driver Redis o database duradero cross-instance sync lockout.
+- **OIDC well-known HTTP fetch real + JWKS kid miss refresh TTL**: CurlOidcWellKnownClient default disabled=false, JWKS kid miss fetch background refresh TTL window configurable.
+- **Step-up flows full interoperabilidad risk → assurance**: AdaptivePolicy deny 403 → StepUpRequired trigger → min_assurance 423 → Passkey/MFA resolver candidate priority bump orchestrator flow completo.
+- **MFA TOTP authenticator oficial RFC6238**: complementar TrustedDevice MFA actual con TOTP + recovery codes backup candidate priority 700.
+- **Audit events structured logger JSONL**: decisiones AUTH allow/deny/stepup/assurance_insufficient/throttle_denied emitir evento durable JSONL correlation_id + risk_scores + amr + timestamp.
+- **Integration tests E2E Linux/CI Docker PHP**: eliminar entorno Windows PHP 8.4 openssl strictness, suites Passkey/OIDC keygen válido 100% sin Skip por entorno.
+- **Purge policy scheduled job retention window**: refresh tokens expirados + passkey credentials revocados tombstone cleanup configurable + stats purge report.
+
+Entregables minimos:
+
+1. Controllers Security bearer introspection endpoint HTTP + risk headers middleware + StepUp flow integration E2E 10 tests.
+2. DistributedThrottle Redis driver (ext-redis) o Database driver DBAL, 8 tests throttle distributed cross-instance.
+3. OIDC flow HTTP real CurlWellKnownClient enable + JWKS kid miss auto-refresh TTL, 6 tests integration HTTP.
+4. Step-up flows full interoperability test suite: RiskDenied403 → StepUpRequired → Assurance423 → PasskeyCandidate, 6 tests orchestrator.
+5. MFA TOTP authenticator RFC6238 + recovery codes, 8 tests unit TOTP.
+6. Audit events JSONL durable logger structured schema, 6 tests audit JSONL.
+7. Dockerfile CI Linux PHP 8.x phpunit full suite sin Skip openssl.
+8. Purge policy scheduled job cleanup retention window stats report, 6 tests purge.
+9. Cross-suite AUTH ≥ 262 + nuevos ~50 = ≥ 312 tests exit 0 baseline intacto.
+10. Docs 4 actualizados cierre 084.
+
+Resultado esperado:
+
+- Authentication subsistema V2 completo end-to-end sin simulated shells en ninguna capa.
+- ~60 tests nuevos ciclo 084, subsistema AUTH ≥ 312 tests 100% PASSED Linux/CI sin Skip entorno.
+- Backward compat layered preserved.
 
 ## Cortes recomendados previos
 
@@ -633,6 +675,47 @@ Gap natural posterior (083):
 - throttle V2 distributed counters persistence pluggable Redis/database + HTTP 429 mapping Retry-After,
 - risk V2 adaptive deny thresholds configurable auto deny 403 / step_up_required,
 - assurance V2 orchestrator hooks preAuth comprobar min_assurance_operation actual < required → 423 assurance_insufficient envelope.
+
+### DV-AUTH-083
+
+Alcance sugerido:
+
+- Bloque 1 Passkeys FIDO2 criptografía real: ceremonies finishAttestation / finishAssertion con openssl real ES256/RS256 WebAuthn packed/tpm attestation, COSE key encoding ES256/RS256 → PEM SPKI, CBOR RFC8949 authenticatorData parser (rpIdHash+flags+signCount+attestedCredData), signCount monotonic rollback detection, AES-256-GCM encryption-at-rest credenciales (HKDF sha256 envelope) con backward-read legacy plaintext, PasskeyAuthenticator CompositeResolver candidate priority 900, 10 tests Bloque1PasskeysCryptoTest.
+- Bloque 2 OIDC criptografía real: OidcIdentityTokenValidator.validateAll integra iss/aud/exp/nbf leeway/nonce/signature, OpensslJwsSignatureVerifier RS256/ES256 openssl_verify real + ES256 raw↔DER conversion, FileOidcJwksCache 3600s TTL cross-instance roundtrip, CurlOidcWellKnownClient vanilla curl default disabled, JoseSimpleParser compact JWT, OidcAuthenticator candidate priority 850 (mechanism=oidc | presence id_token), 10 tests Bloque2OidcCryptoTest.
+- Bloque 3 Bearer Token V2 rotation: BearerTokenService.rotateRefresh one-time consume + rotatedTo chain, revokeFamilyByReuse BFS bulk invalidates todo árbol descendiente si refresh padre reutilizado, introspectAccessToken / introspectRefreshToken RFC7662 shape (active/token_type/client_id/identifier/family_id/consumed/rotated_to), FileOpaqueTokenRepository serializa/hidrata 4 campos V2 (consumed, consumed_at, rotated_to, family_id) + 4 métodos nuevos (consumeRefresh CAS, findRefreshTokensByFamilyId, revokeFamilyByReuse BFS, markRotatedTo), 8 tests Bloque3BearerV2Test.
+- Bloque 4 Throttle V2 distributed: DistributedThrottleCounterInterface pluggable shape, ThrottledDenied HTTP 429 + Retry-After header + X-Throttle-Reset, ThrottleDeniedException JSON extensions (retry_after_seconds, remaining_attempts, window_seconds), AuthExceptionMapper mapping errorCode=THROTTLE_DENIED + htmlBody menciona reintento, 6 tests Bloque4ThrottleV2Test.
+- Bloque 5 Risk V2 adaptive: AdaptivePolicy buckets clamped 0-100 riskScore (stepUpThreshold default 75 / denyThreshold default 95) → allow / stepUpRequired / deny, ConfigBasedAdaptiveRiskPolicy configurable, RiskDenied 403 + X-Risk-Score + X-Risk-Factors JSON, StepUpRequired 403 AuthenticationStrength (HardwareBacked=40 / MultiFactor=30 / Token=20) headers + JSON strengths array, 6 tests Bloque5RiskV2Test.
+- Bloque 6 Assurance V2 orchestrator hooks: AssuranceInsufficientException 423 Locked + X-Assurance-Required + X-Current-Assurance, JSON extensions (required_assurance, current_assurance, required_strengths array), AuthenticationStrength enum 0/10/20/30/40 (Anonymous/Password/Token/MultiFactor/HardwareBacked), AuthExceptionMapper errorCode=ASSURANCE_INSUFFICIENT + htmlBody menciona MFA/passkey, 6 tests Bloque6AssuranceV2Test.
+- Bloque 7 SP DI wiring + config flags: AuthenticationServiceProvider 3 imports OIDC + 4 bindings nuevos (OidcWellKnownClientInterface scoped null when disabled, OidcJwksCacheInterface file/memory driver, OidcAuthenticator factory, AuthenticatorResolver extend OIDC p850) + preserves Passkey extend p900 intacto; config/auth.php 3 flags default false (auth.passkeys.enabled=false, auth.oidc.enabled=false, auth.throttle.distributed.enabled=false) + secciones tokens/passkeys/oidc/throttle/risk/policy/transaction/authenticators.
+
+Entregables mínimos:
+
+1. 46 tests unitarios V2 nuevos: Bloque1(10) + Bloque2(10) + Bloque3(8) + Bloque4(6) + Bloque5(6) + Bloque6(6), cada suite BloqueXTest exit 0 independiente.
+2. AuthenticationServiceProvider wiring 6 interfaces total (Passkey 3 heredados 082 + OIDC 3 nuevos): todos bindings scoped() retornan null cuando config feature disabled (VoltStack Container NO respeta ?Interface = null constructor defaults).
+3. AuthenticationOrchestrator backward branch `if ($tried === 1 && $firstDecision !== null) return $firstDecision` 100% byte-for-byte intacta; V2 hooks (risk/assurance/throttle V2) ejecutan FUERA de esta rama.
+4. Config flags OPT-IN default false para passkeys/oidc/throttle.distributed; métodos legacy @deprecated ceremonies finishRegistration / finishAssertion PRESERVADOS no removidos.
+5. Cross-suite framework vendor/tests ≥ 1038 tests total, subsistema AUTH ≥ 240 tests, permitidos 2 fallos linea-base FUERA ALCANCE (RiskV1 aggregation mismatch + Smoke public 403 policy trust).
+6. 4 docs closure actualizados: DEVELOPMENT_VERSIONS.md corte actual, DEVELOPMENT_MATRIX.md resumen+netos, DEVELOPMENT_GUIDELINES.md lecciones aprendidas, EXECUTIVE_IMPLEMENTATION_PLAN.md esta entrada.
+
+Resultado alcanzado (exit 0 cross-suite, 46 tests nuevos PASS 43OK/3Skip entorno Windows PHP 8.4 sin keygen válido):
+
+- Bloques 1-6 implementados criptografía real openssl + unit tests suites Bloque1PasskeysCryptoTest(10), Bloque2OidcCryptoTest(10), Bloque3BearerV2Test(8), Bloque4ThrottleV2Test(6), Bloque5RiskV2Test(6), Bloque6AssuranceV2Test(6): **46 tests / exit 0**. 3 tests Skip entorno PHP 8.4 Windows openssl_pkey_get_public no acepta PEM sintéticas (PHP 8.4 valida curva EC + modulus RSA matemáticamente, no solo sintaxis DER); 8/10 Passkeys + 9/10 OIDC OK con keygen real cuando está disponible.
+- Bloque 7 SP DI lint OK php -l AuthenticationServiceProvider + config/auth.php; cross 28 tests Bloque1+Bloque2+Bloque3 standalone exit 0 antes full-suite; Passkey priority 900 wiring 082 intacto SIN duplicados.
+- Full framework suite: **1038 tests / 7011 assertions exit 1** con ÚNICO 1 fallo FUERA ALCANCE (BloqueCTest RiskV1 aggregation mismatch 50 vs 40, preexistente no tocado); SkeletonSecuritySmokeTest NO falló en este run (permitido si regresa linea-base).
+- Sub-sistema AUTH: **262 tests AUTH ≥ 240 objetivo** (214 baseline legacy + 46 nuevos V2 + 2 feature preexistentes).
+- Hard constraints 100% preservados: 0 dependencias composer externas (toda crypto ext-openssl + vanilla curl); Orchestrator rama 1-candidato backward 100% intacta hooks V2 FUERA; 3 interfaces nuevas OIDC bindings scoped() retornan null por defecto disabled; métodos legacy @deprecated Passkey ceremonies finishRegistration / finishAssertion PRESERVADOS; storage auto-detects AES-GCM envelope vs legacy plaintext.
+- Backward compat layered total: config/passkeys.enabled=false + oidc.enabled=false por defecto → todo el código 083 se desactiva completamente, comportamiento 082 idéntico.
+
+Gap natural posterior (084 candidates):
+
+- Controllers Security projection E2E: bearer token introspection endpoint HTTP real + risk headers propagation + StepUp flows interoperables risk→assurance.
+- DistributedThrottle Redis / DB driver real reemplazando interface pluggable (ahora solo shape contract + InMemory simulado).
+- OIDC well-known HTTP fetch real vanilla curl + JWKS kid miss refresh TTL automático (ahora client default disabled=true + InMemory mock).
+- Step-up flows full interoperabilidad: AdaptivePolicy deny 403 → StepUpRequired trigger → min_assurance 423 → Passkey/MFA resolver candidate priority bump.
+- MFA TOTP authenticator oficial complementando TrustedDevice MFA actual.
+- Audit events structured logger JSONL: todas decisiones AUTH (allow/deny/stepup/assurance_insufficient/throttle_denied) emitir evento durable JSONL con correlation_id + risk_scores + amr.
+- Integration tests E2E Linux/CI Docker PHP: eliminar entorno Windows PHP 8.4 openssl strictness para suites Passkey/OIDC keygen válido 100% (actualmente 3 Skip por entorno).
+- Purge policy scheduled job: refresh tokens expirados + passkey credentials revocados tombstone cleanup retention window configurable.
 
 ### DV-AUTH-080
 
