@@ -610,7 +610,7 @@ Resultado alcanzado del ciclo DV-AUTH-083 (cerrado, exit 0, 46 tests nuevos ≥ 
 - ✅ **Hard constraints 100% preservados**: 0 librerías externas Composer (openssl nativo + COSE/JWKS parser from scratch). Rama 1-candidate Orchestrator intacta. Backward compat ceremonies @deprecated finishRegistration/finishAssertion + OidcValidator shell V1 preserved (skeleton_version=082_v1).
 - ✅ **Preexisting fix aplicado**: ControllerSecurityContextFactoryTest 2 anonymous AuthenticationManagerInterface (líneas 140 y 332) añadidos signatures exactos managedDevices(string $identity, ?string $type=null): array y revokeManagedDevice(string $identity, string $deviceReference, ?string $type=null, string $scope='all'): bool → eliminados 216 E fatal errors abstract methods missing.
 - **Lecciones aprendidas SP DI wiring permanente (documentadas en DEVELOPMENT_GUIDELINES)**: (a) VoltStack Application NO implementa `extend()`; composite wiring DENTRO del único binding scoped closure inline. (b) Container NO respeta `?Interfaz = null` default constructores; binding explícito scoped/bind SIEMPRE con `return null` cuando config disabled. (c) CompositeAuthenticatorResolver::addResolver inline 2 bloques passkey p900 + oidc p850 DENTRO del binding AuthenticatorResolverInterface. (d) 4 flags de activación feature DEFAULT false: auth.passkeys.enabled / auth.oidc.enabled / auth.throttle.distributed.enabled / auth.risk.adaptive.enabled.
-- **Gap natural posterior (siguiente foco sugerido DV-AUTH-084)**: (1) Controllers/Security bearer metadata injection HTTP responses (revoke/introspection endpoints). (2) Redis/DB DistributedThrottleCounter concrete impl DBAL QueryBuilder. (3) OidcWellKnownHttpClient real HTTP file_get_contents + Cache TTL .well-known/openid-configuration fetch. (4) PasskeyAuthenticator registration + assertion controller HTTP routes integration real. (5) Database concrete impl OpaqueTokenRepository (tokens table schema + Seeder). (6) JWT bearer token signed option (openssl_sign) v3 opaque vs signed config flag.
+- **Gap natural posterior (siguiente foco sugerido DV-AUTH-084)**: (1) Controllers/Security bearer metadata injection HTTP responses YA INICIADO via `BearerTokenOperationsController` reusable + skeleton routes demo, pendiente formalizar superficie HTTP final y step-up E2E. (2) Redis/DB DistributedThrottleCounter concrete impl DBAL QueryBuilder. (3) OidcWellKnownHttpClient real HTTP file_get_contents + Cache TTL .well-known/openid-configuration fetch. (4) PasskeyAuthenticator registration + assertion controller HTTP routes integration real. (5) Database concrete impl OpaqueTokenRepository (tokens table schema + Seeder). (6) JWT bearer token signed option (openssl_sign) v3 opaque vs signed config flag.
 
 ### DV-AUTH-084 (detalle plan siguiente corte)
 
@@ -637,6 +637,20 @@ Entregables minimos:
 8. Purge policy scheduled job cleanup retention window stats report, 6 tests purge.
 9. Cross-suite AUTH ≥ 262 + nuevos ~50 = ≥ 312 tests exit 0 baseline intacto.
 10. Docs 4 actualizados cierre 084.
+
+Progreso parcial ya entregado dentro de 084:
+
+- `ControllerSecurityContextFactory` ya deriva principal/claims/metadata desde bearer opaco real usando `BearerTokenService`.
+- `BearerTokenService` ya expone `revokeAccessTokenPair()` para invalidar access token + refresh vinculado.
+- `Quantum/Auth/Controllers/BearerTokenOperationsController.php` ya sube introspection/revoke al framework como controller reusable.
+- El skeleton ya consume esa capacidad por rutas HTTP reales `/security/demo/bearer-introspect` y `/security/demo/bearer-revoke`.
+- Regresiones dirigidas verdes en `ControllerSecurityContextFactoryTest`, `Bloque3BearerV2Test` y `SkeletonSecuritySmokeTest`.
+
+Pendiente para cerrar el entregable 1 completo:
+
+- formalizar rutas fuera del espacio `demo`,
+- completar propagacion E2E de risk/assurance headers,
+- cerrar flows interoperables `RiskDenied/StepUpRequired/AssuranceInsufficient`.
 
 Resultado esperado:
 

@@ -13,11 +13,37 @@ Sirve como control operativo de:
 
 ## Corte actual
 
-- Fecha de actualizacion: `2026-03-29`
-- Estado general: `DV-AUTH-083 CERRADO VERIFICADO: Passkeys FIDO2 criptografía real openssl+CBOR RFC8949+COSE ES256/RS256 desde ceremonies (Bloque1 10 tests OK, 2 skip entorno sin keygen), OIDC Federation criptografía real RS256/ES256 signature verify via OpensslJwsSignatureVerifier + FileOidcJwksCache TTL 3600s cross-instance roundtrip + OidcAuthenticator candidate priority 850 (Bloque2 10 tests OK, 1 skip sin keygen), Bearer Token V2 rotation one-time consume + familyId reuse detection BFS por rotatedTo chain bulk revoke familia completa + RFC7662 introspection access/refresh shape + FileOpaqueTokenRepository serializa/hidrata V2 campos + 4 métodos interface V2 (Bloque3 8 tests OK 72 assertions), Throttle V2 ThrottleDeniedException status HTTP 429 + Retry-After header estandar + DistributedThrottleCounterInterface pluggable + AuthExceptionMapper X-Auth-Throttle-* headers y JSON reason_code/retry_after (Bloque4 6 tests OK), Risk V2 adaptive ConfigBasedAdaptiveRiskPolicy buckets allow/stepUpRequired/deny por riskScore + RiskDeniedException 403 risk_score/deny_threshold headers + StepUpRequiredException con AuthenticationStrength enum values (Bloque5 6 tests OK), Assurance V2 AssuranceInsufficientException status 423 + min_assurance headers X-Auth-Assurance-Insufficient + errorCode y htmlBody (Bloque6 6 tests OK), AuthenticationServiceProvider wiring 3 scoped bindings nuevos OIDC (WellKnown/JwksCache/Authenticator) + extender AuthenticatorResolver Passkey priority 900 existente + OIDC priority 850 nuevo IF config enabled, config/auth.php 3 flags OPT-IN DEFAULT false: auth.passkeys.enabled=false / auth.oidc.enabled=false / auth.throttle.distributed.enabled=false. Cross-suite full vendor/framework 1038 tests 7011 assertions exit 1 (1 ÚNICO fallo preexistente FUERA ALCANCE BloqueCTest RiskV1 aggregation mismatch 40≠50, Risk V1 legacy no tocado en 083; SkeletonSecuritySmokeTest NO falló en este run). Total 46 tests AUTH V2 nuevos: Bloque1(10)+Bloque2(10)+Bloque3(8)+Bloque4(6)+Bloque5(6)+Bloque6(6) = 46 PASS 43/3 skip entorno sin openssl keygen válido Windows PHP8.4, baseline AUTH ≥240 cumplido (216 anteriores + 46 = 262 AUTH). Sin librerías externas Composer: 0 vendor nuevos, todo openssl nativo + vanilla curl + from-scratch CBOR/COSE/JWKS parsers.`
-- Foco del siguiente ciclo recomendado: `DV-AUTH-084: Integración E2E Controllers Security Context derivation principal bearer opaque tokens con risk+assurance metadata projection, implementación DistributedThrottleCounterInterface driver Redis/DB o file shared lock cross-instance, OIDC real CurlOidcWellKnownClient fetch JWKS well-known con refresh TTL kid miss, step-up flows interoperables risk→assurance, MFA TOTP authenticator oficial complementando password+passkeys, auth audit structured logger events JSONL, integration tests E2E passkeys+OIDC en entorno OpenSSL válido (Linux/CI Docker PHP no Windows 8.4 strict curve validation), purge policy refresh tokens expirados scheduled job.`
+- Fecha de actualizacion: `2026-10-02`
+- Estado general: DV-AUTH-083 CERRADO VERIFICADO + DV-AUTH-084 PARCIAL DOCUMENTADO. Sobre la base 083 ya se entrego el primer tramo reusable de Controllers Security bearer para cualquier app VoltStack. `Quantum/Controllers/Security/Context/ControllerSecurityContextFactory.php` ahora proyecta bearer opaco real via `BearerTokenService` en lugar de aceptar cualquier string arbitrario; `Tokens/BearerTokenService.php` expone proyecciones seguras para contexto HTTP y `revokeAccessTokenPair()` para revocar access+refresh vinculados; `Quantum/Auth/Controllers/BearerTokenOperationsController.php` mueve introspection/revoke al framework como controller reusable; el skeleton consume esa capacidad desde rutas HTTP reales `/security/demo/bearer-introspect` y `/security/demo/bearer-revoke`; y las regresiones dirigidas quedaron verdes en `ControllerSecurityContextFactoryTest`, `SkeletonSecuritySmokeTest` y `Bloque3BearerV2Test`. El resto del alcance 084 sigue abierto: drivers distribuidos reales de throttle, OIDC HTTP well-known/JWKS kid refresh, step-up E2E risk→assurance, MFA TOTP, audit JSONL durable, CI Linux OpenSSL valido y purge jobs.
+- Foco del siguiente ciclo recomendado: DV-AUTH-084 continuación. Formalizar las rutas bearer fuera del espacio demo (`/auth/tokens/introspect` y `/auth/tokens/revoke` o equivalente), propagar headers/risk/assurance de forma mas estable en Controllers Security, implementar `DistributedThrottleCounterInterface` con driver Redis/DB real, completar OIDC HTTP well-known + JWKS kid miss refresh, cerrar los flows interoperables risk→assurance→step-up, agregar MFA TOTP + recovery codes, audit structured logger JSONL durable, CI Linux/OpenSSL sin skips y purge policy de refresh tokens expirados.
 
 ## Versionado de desarrollo
+
+### DV-AUTH-084
+
+- Estado: `Parcial`
+- Bloques documentales relacionados: `14`, `22`, `47`, `48`, `49`
+- Alcance implementado:
+  - extraer la capacidad HTTP bearer de introspection/revoke fuera del controller demo y subirla al `framework`,
+  - reutilizar `BearerTokenService` para proyectar metadata real de bearer opaco hacia Controllers Security,
+  - dejar al `skeleton` como consumidor fino por rutas, sin duplicar la logica operativa.
+- Evidencia principal:
+  - `vendor/voltstack/framework/src/Quantum/Auth/Controllers/BearerTokenOperationsController.php`
+  - `vendor/voltstack/framework/src/Quantum/Auth/Tokens/BearerTokenService.php`
+  - `vendor/voltstack/framework/src/Quantum/Controllers/Security/Context/ControllerSecurityContextFactory.php`
+  - `vendor/voltstack/framework/tests/Unit/ControllerSecurityContextFactoryTest.php`
+  - `vendor/voltstack/framework/tests/Unit/Bloque3BearerV2Test.php`
+  - `vendor/voltstack/framework/tests/Feature/SkeletonSecuritySmokeTest.php`
+  - `routes/web.php`
+- Resultado:
+  - el framework ya ofrece un controller reusable para bearer introspection y revoke,
+  - Controllers Security ya no considera autenticado cualquier bearer arbitrario cuando `BearerTokenService` esta disponible,
+  - el skeleton ya monta introspection y revocacion HTTP reales sobre tokens opacos emitidos por el subsistema,
+  - la revocacion del bearer actual ya invalida tambien el refresh token vinculado.
+- Gap natural posterior:
+  - formalizar la superficie HTTP fuera del espacio `demo`,
+  - completar step-up E2E y propagacion richer de risk/assurance,
+  - cerrar drivers reales y observabilidad durable que siguen pendientes en 084.
 
 ### DV-AUTH-001
 
